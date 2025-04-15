@@ -2,19 +2,15 @@
    These are like reusable values that we can use throughout our CSS
    They make it easy to change colors and other styles in one place */
 :root {
-  /* Football pitch theme colors */
-  --pitch-green: #2e7d32;
-  --white-lines: #ffffff;
-  --text-color: #2c3e50;       /* Main text color */
-  --error-color: #e74c3c;      /* Color for error messages */
-  --success-color: #2ecc71;    /* Color for success messages */
-  --primary-color: #2c3e50;    /* Main text and heading color */
-  --secondary-color: #3498db;  /* Accent color for buttons and links */
-  --warning-color: #f39c12;    /* Color for warning messages */
-  --background-color: #f5f6fa; /* Main background color */
-  --card-background: #ffffff;  /* Background color for cards */
-  --border-color: #dcdde1;     /* Color for borders */
-  --shadow-color: rgba(0, 0, 0, 0.1); /* Color for shadows */
+  --primary-green: #00FF47;
+  --dark-bg: #0A0A0A;
+  --dark-bg-lighter: #1A1A1A;
+  --text-white: #FFFFFF;
+  --text-gray: #CCCCCC;
+  --success-color: #00FF47;
+  --error-color: #FF4747;
+  --border-radius: 8px;
+  --transition: all 0.3s ease;
 }
 
 /* Reset default browser styles */
@@ -25,18 +21,19 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--dark-bg);
+  color: var(--text-white);
   line-height: 1.6;
-  color: var(--text-color);
-  background-color: var(--background-color);
-  padding: 20px;
+  margin: 0;
+  padding: 0;
 }
 
 /* Container to center and limit content width */
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 2rem;
 }
 
 /* Header styles */
@@ -44,22 +41,33 @@ header {
   text-align: center;
   margin-bottom: 40px;
   padding: 20px;
-  background-color: var(--pitch-green);
-  color: var(--white-lines);
+  background-color: var(--dark-bg-lighter);
+  color: var(--text-white);
   border-radius: 8px;
 }
 
 h1, h2, h3 {
-  color: var(--primary-color);
+  color: var(--text-white);
   margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h1 span {
+  color: var(--primary-green);
 }
 
 /* Form styles */
 .team-form {
-  margin-bottom: 40px;
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+  background-color: var(--dark-bg-lighter);
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 255, 71, 0.15);
 }
 
 .form-group {
@@ -73,57 +81,60 @@ label {
 }
 
 input[type="text"] {
+  background-color: var(--dark-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-white);
+  padding: 0.8rem 1rem;
+  border-radius: var(--border-radius);
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
+  transition: var(--transition);
 }
 
 input[type="text"]:focus {
+  border-color: var(--primary-green);
   outline: none;
-  border-color: var(--secondary-color);
-  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  box-shadow: 0 0 0 2px rgba(0, 255, 71, 0.2);
 }
 
 /* Position group styles (for each section of players) */
 .position-group {
-  background: var(--background-color);
-  padding: 1rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 255, 71, 0.2);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.position-group legend {
-  font-weight: bold;
-  padding: 0 10px;
-  color: var(--pitch-green);
+.position-group h3 {
+  color: var(--primary-green);
+  margin-top: 0;
+  font-size: 1.2rem;
+  text-transform: uppercase;
 }
 
 /* Grid layout for player inputs */
 .player-inputs {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  margin-top: 0.5rem;
 }
 
 /* Button styles */
 button {
-  background-color: var(--secondary-color);
-  color: white;
-  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-green);
+  color: var(--dark-bg);
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
+  padding: 1rem 2rem;
+  border-radius: var(--border-radius);
   font-weight: 600;
-  transition: background-color 0.3s ease;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: var(--transition);
 }
 
 button:hover {
-  background-color: #2980b9;
+  background-color: #00CC3A;
+  transform: translateY(-2px);
 }
 
 button:disabled {

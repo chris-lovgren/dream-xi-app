@@ -3,87 +3,76 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dream XI - Create Your Football Team</title>
+  <title>Dream XI - Build Your Football Team</title>
   <link rel="stylesheet" href="styles.css"> <!-- Link the CSS file -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
   <!-- Main container for the entire application -->
   <div class="container">
     <!-- Header section with title -->
-    <header>
-      <h1>Dream XI</h1>
-      <p>Create your perfect football team</p>
+    <header class="header">
+      <div class="container">
+        <h1>Dream <span>XI</span></h1>
+      </div>
     </header>
 
     <!-- Main content area -->
     <main>
       <!-- Team creation form -->
-      <section class="team-form">
-        <h2>Create Your Team</h2>
-        
-        <!-- Form for submitting a new team -->
-        <form id="teamForm">
-          <!-- Submitter's name input -->
-          <div class="form-group">
-            <label for="submitterName">Your Name</label>
-            <input type="text" id="submitterName" name="submitterName" required 
-                   placeholder="Enter your name">
+      <div class="team-form-container">
+        <form id="teamForm" class="team-form">
+          <div class="position-group">
+            <h3>Team Creator</h3>
+            <div class="player-inputs">
+              <input type="text" id="submitterName" placeholder="Your Name" required>
+            </div>
           </div>
 
-          <!-- Goalkeeper input -->
-          <div class="form-group">
-            <label for="goalkeeper">Goalkeeper</label>
-            <input type="text" id="goalkeeper" name="goalkeeper" required 
-                   placeholder="Enter goalkeeper name">
+          <div class="position-group">
+            <h3>Goalkeeper</h3>
+            <div class="player-inputs">
+              <input type="text" id="goalkeeper" placeholder="Goalkeeper Name" required>
+            </div>
           </div>
 
-          <!-- Defenders section -->
-          <fieldset id="defendersGroup" class="position-group">
-            <legend>Defenders (3-5 players)</legend>
+          <div class="position-group">
+            <h3>Defenders (3-5)</h3>
             <div class="player-inputs">
-              <!-- Required defender inputs -->
-              <input type="text" name="defender1" required placeholder="Defender 1">
-              <input type="text" name="defender2" required placeholder="Defender 2">
-              <input type="text" name="defender3" required placeholder="Defender 3">
-              <!-- Optional defender inputs -->
-              <input type="text" name="defender4" placeholder="Defender 4 (optional)">
-              <input type="text" name="defender5" placeholder="Defender 5 (optional)">
+              <input type="text" class="defender" placeholder="Defender 1" required>
+              <input type="text" class="defender" placeholder="Defender 2" required>
+              <input type="text" class="defender" placeholder="Defender 3" required>
+              <input type="text" class="defender" placeholder="Defender 4 (Optional)">
+              <input type="text" class="defender" placeholder="Defender 5 (Optional)">
             </div>
-          </fieldset>
+          </div>
 
-          <!-- Midfielders section -->
-          <fieldset id="midfieldersGroup" class="position-group">
-            <legend>Midfielders (3-5 players)</legend>
+          <div class="position-group">
+            <h3>Midfielders (3-5)</h3>
             <div class="player-inputs">
-              <!-- Required midfielder inputs -->
-              <input type="text" name="midfielder1" required placeholder="Midfielder 1">
-              <input type="text" name="midfielder2" required placeholder="Midfielder 2">
-              <input type="text" name="midfielder3" required placeholder="Midfielder 3">
-              <!-- Optional midfielder inputs -->
-              <input type="text" name="midfielder4" placeholder="Midfielder 4 (optional)">
-              <input type="text" name="midfielder5" placeholder="Midfielder 5 (optional)">
+              <input type="text" class="midfielder" placeholder="Midfielder 1" required>
+              <input type="text" class="midfielder" placeholder="Midfielder 2" required>
+              <input type="text" class="midfielder" placeholder="Midfielder 3" required>
+              <input type="text" class="midfielder" placeholder="Midfielder 4 (Optional)">
+              <input type="text" class="midfielder" placeholder="Midfielder 5 (Optional)">
             </div>
-          </fieldset>
+          </div>
 
-          <!-- Forwards section -->
-          <fieldset id="forwardsGroup" class="position-group">
-            <legend>Forwards (1-3 players)</legend>
+          <div class="position-group">
+            <h3>Forwards (1-3)</h3>
             <div class="player-inputs">
-              <!-- Required forward input -->
-              <input type="text" name="forward1" required placeholder="Forward 1">
-              <!-- Optional forward inputs -->
-              <input type="text" name="forward2" placeholder="Forward 2 (optional)">
-              <input type="text" name="forward3" placeholder="Forward 3 (optional)">
+              <input type="text" class="forward" placeholder="Forward 1" required>
+              <input type="text" class="forward" placeholder="Forward 2 (Optional)">
+              <input type="text" class="forward" placeholder="Forward 3 (Optional)">
             </div>
-          </fieldset>
+          </div>
 
-          <!-- Submit button -->
-          <button type="submit">Save Team</button>
+          <button type="submit">Create Team</button>
         </form>
 
         <!-- Message area for showing success/error messages -->
-        <div id="message" class="message"></div>
-      </section>
+        <div id="message" class="message" style="display: none;"></div>
+      </div>
 
       <!-- Display area for saved teams -->
       <section class="saved-teams">
