@@ -11,6 +11,9 @@
   --error-color: #FF4747;
   --border-radius: 8px;
   --transition: all 0.3s ease;
+  --card-background: #1A1A1A;
+  --shadow-color: rgba(0, 255, 71, 0.15);
+  --border-color: rgba(0, 255, 71, 0.3);
 }
 
 /* Reset default browser styles */
@@ -194,25 +197,86 @@ button.loading::after {
 /* Saved teams section */
 .saved-teams {
   padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+  background-color: var(--dark-bg-lighter);
+  border-radius: var(--border-radius);
+  margin-top: 2rem;
 }
 
-.team {
-  background-color: white;
-  padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.saved-teams h2 {
+  color: var(--primary-green);
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 1.8rem;
 }
 
-.team h3 {
-  color: var(--pitch-green);
-  margin-bottom: 10px;
+/* Team card container */
+.teams-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
-.team p {
-  margin-bottom: 5px;
+/* Individual team card */
+.team-card {
+  background: var(--card-background);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 4px var(--shadow-color);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border-color);
+}
+
+/* Team card hover effect */
+.team-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+/* Team card heading */
+.team-card h3 {
+  color: var(--primary-green);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+/* Team details */
+.team-card div {
+  margin-bottom: 1rem;
+}
+
+.team-card strong {
+  color: var(--primary-green);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.team-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.team-card li {
+  color: var(--text-white);
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.team-card li:last-child {
+  border-bottom: none;
+}
+
+/* Player list */
+.player-list {
+  margin-top: 0.5rem;
+  padding-left: 1rem;
+}
+
+.player-list li {
+  color: var(--text-white);
+  margin-bottom: 0.25rem;
 }
 
 /* Responsive design for mobile devices */
@@ -246,47 +310,6 @@ button.loading::after {
   .player-inputs {
     grid-template-columns: repeat(3, 1fr);
   }
-}
-
-/* Team card container */
-.teams-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-top: 2rem;
-}
-
-/* Individual team card */
-.team-card {
-  background: var(--card-background);
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px var(--shadow-color);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Team card hover effect */
-.team-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow-color);
-}
-
-/* Team card heading */
-.team-card h3 {
-  color: var(--primary-color);
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--border-color);
-}
-
-/* Team details paragraph */
-.team-details p {
-  margin-bottom: 0.5rem;
-}
-
-/* Team details strong text */
-.team-details strong {
-  color: var(--secondary-color);
 }
 
 /* Loading state */
