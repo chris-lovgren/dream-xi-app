@@ -2,6 +2,13 @@
 
 A simple web application where users can create and share their dream football teams.
 
+## Live Demo
+
+The application is deployed on Render and can be accessed here:
+[https://dream-xi-app.onrender.com](https://dream-xi-app.onrender.com)
+
+*(Note: Free Render services may spin down after inactivity and take a few seconds to load initially.)*
+
 ## Project Architecture
 
 This application follows a simple client-server architecture:
@@ -14,8 +21,11 @@ dream-xi/
 │   └── app.js        # Frontend logic and API calls
 ├── backend/          # Server-side code
 │   └── index.js      # Express server and API endpoints
-├── team.json         # Database file storing all teams
-└── package.json      # Project configuration and dependencies
+├── team.json         # Database file storing all teams (ephemeral on free tier)
+├── team.json.docs.md # Documentation for team.json
+├── package.json      # Project configuration and dependencies
+├── Procfile          # Specifies how to run the app on Render
+└── README.md         # This file
 ```
 
 ### How It Works
@@ -42,29 +52,44 @@ dream-xi/
      - midfielders: Array of midfielders (3-5 players)
      - forwards: Array of forwards (1-3 players)
 
-## Setup Instructions
+## Setup Instructions (Local Development)
 
-1. Install dependencies:
+1. Clone the repository:
+   ```bash
+   git clone <your-repo-url>
+   cd dream-xi
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the development server:
+3. Start the development server:
    ```bash
    npm run dev
+   # or for production mode start
+   # npm start
    ```
 
-3. Open your browser to:
+4. Open your browser to:
    ```
    http://localhost:3000
    ```
 
 ## Deployment
 
-This app can be easily deployed to services like Render.com or Railway.app. See the deployment section in each file for specific instructions.
+This app is configured for deployment on Render.
+
+* **Platform:** Render.com
+* **Service Type:** Web Service
+* **Build Command:** `npm install`
+* **Start Command:** `npm start` (or uses `Procfile`: `web: node backend/index.js`)
+* **Live URL:** [https://dream-xi-app.onrender.com](https://dream-xi-app.onrender.com)
 
 ## Learning Resources
 
 - [Express.js Documentation](https://expressjs.com/)
 - [JavaScript Basics](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-- [HTML & CSS Basics](https://developer.mozilla.org/en-US/docs/Learn) 
+- [HTML & CSS Basics](https://developer.mozilla.org/en-US/docs/Learn)
+- [Render Documentation](https://render.com/docs) 
