@@ -2,8 +2,16 @@
 
 A web application that allows users to create and save their dream football team formations. Built with Node.js, Express, and vanilla JavaScript.
 
+## Live Demo
+
+The application is deployed on Render and can be accessed here:
+[https://dream-xi-app.onrender.com](https://dream-xi-app.onrender.com)
+
+*(Note: Free Render services may spin down after inactivity and take a few seconds to load initially.)*
+
 ## Table of Contents
 - [Dream XI - Football Team Builder](#dream-xi---football-team-builder)
+  - [Live Demo](#live-demo)
   - [Table of Contents](#table-of-contents)
   - [Project Overview](#project-overview)
   - [Project Structure](#project-structure)
@@ -17,6 +25,9 @@ A web application that allows users to create and save their dream football team
   - [API Documentation](#api-documentation)
   - [Contributing](#contributing)
   - [Support](#support)
+  - [Deployment](#deployment)
+    - [Deployment Details](#deployment-details)
+    - [Deployment Process](#deployment-process)
 
 ## Project Overview
 
@@ -202,4 +213,23 @@ For detailed information about the API endpoints, see [API.md](API.md).
 For questions or issues, please:
 1. Check the documentation
 2. Search existing issues
-3. Create a new issue if needed 
+3. Create a new issue if needed
+
+## Deployment
+
+This application is deployed on Render.com, a cloud platform that makes it easy to deploy web applications.
+
+### Deployment Details
+- **Platform:** [Render.com](https://render.com)
+- **Service Type:** Web Service
+- **Build Command:** `npm install`
+- **Start Command:** `npm start`
+- **Environment:** Node.js
+- **Auto-Deploy:** Enabled (deploys automatically when changes are pushed to the main branch)
+
+### Deployment Process
+1. Changes are pushed to the GitHub repository
+2. Render detects the changes
+3. Automatic build process starts
+4. Application is deployed to production
+5. New version becomes available at [https://dream-xi-app.onrender.com](https://dream-xi-app.onrender.com) 
