@@ -2,108 +2,132 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('teamForm');
     const messageElement = document.getElementById('message');
     const teamsContainer = document.getElementById('teamsList');
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    // Loading state management
+    const setLoading = (isLoading) => {
+        submitButton.disabled = isLoading;
+        submitButton.textContent = isLoading ? 'Saving...' : 'Save Team';
+        if (isLoading) {
+            submitButton.classList.add('loading');
+        } else {
+            submitButton.classList.remove('loading');
+        }
+    };
+
+    // Function to show messages with different types
+    const showMessage = (message, type = 'info') => {
+        messageElement.textContent = message;
+        messageElement.className = `message ${type}`;
+        messageElement.style.display = 'block';
+        
+        // Auto-hide success messages after 3 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 3000);
+        }
+    };
 
     // Function to collect players from a position group
-    const collectPlayers = (positionGroup) => {
-        const inputs = positionGroup.querySelectorAll('input[type="text"]');
+    const collectPlayers = (positionGroupId) => {
+        const inputs = document.querySelectorAll(`#${positionGroupId} input[type="text"]`);
         return Array.from(inputs)
             .map(input => input.value.trim())
-            .filter(name => name);
+            .filter(name => name !== '');
+    };
+
+    // Function to validate form data
+    const validateForm = (team) => {
+        const errors = [];
+
+        if (!team.submitterName) {
+            errors.push('Please enter your name');
+        }
+
+        if (!team.goalkeeper) {
+            errors.push('Please select a goalkeeper');
+        }
+
+        if (team.defenders.length < 3 || team.defenders.length > 5) {
+            errors.push('You must select between 3 and 5 defenders');
+        }
+
+        if (team.midfielders.length < 3 || team.midfielders.length > 5) {
+            errors.push('You must select between 3 and 5 midfielders');
+        }
+
+        if (team.forwards.length < 1 || team.forwards.length > 3) {
+            errors.push('You must select between 1 and 3 forwards');
+        }
+
+        return errors;
     };
 
     // Function to fetch and display teams
     const fetchAndDisplayTeams = async () => {
         try {
+            teamsContainer.innerHTML = '<div class="loading">Loading teams...</div>';
+            
             const res = await fetch('/teams');
             if (!res.ok) {
-                let errorMsg = `HTTP error! status: ${res.status}`;
-                try {
-                    const errorData = await res.json();
-                    errorMsg = errorData.message || errorMsg;
-                } catch (parseError) {
-                    // Ignore if response body is not JSON or empty
-                }
-                throw new Error(errorMsg);
+                throw new Error(`HTTP error! status: ${res.status}`);
             }
+            
             const teams = await res.json();
 
-            teamsContainer.innerHTML = ''; // Clear previous content
-
             if (!Array.isArray(teams)) {
-                console.error("Received non-array data from /teams endpoint:", teams);
-                throw new Error("Invalid data format received from server.");
+                throw new Error('Invalid data format received from server');
             }
 
+            teamsContainer.innerHTML = '';
+
             if (teams.length === 0) {
-                teamsContainer.innerHTML = '<p>No teams saved yet. Be the first to create one!</p>';
+                teamsContainer.innerHTML = '<p class="no-teams">No teams saved yet. Be the first to create one!</p>';
                 return;
             }
 
-            // Display teams in reverse chronological order (newest first)
+            // Display teams in reverse chronological order
             teams.reverse().forEach(team => {
-                const teamDiv = document.createElement('div');
-                teamDiv.classList.add('team');
-
-                const submitterName = document.createElement('h3');
-                submitterName.textContent = `${team.submitterName}'s Team`;
-
-                const goalkeeper = document.createElement('p');
-                goalkeeper.innerHTML = `<strong>Goalkeeper:</strong> ${team.goalkeeper}`;
-
-                const defenders = document.createElement('p');
-                defenders.innerHTML = `<strong>Defenders:</strong> ${team.defenders.join(', ')}`;
-
-                const midfielders = document.createElement('p');
-                midfielders.innerHTML = `<strong>Midfielders:</strong> ${team.midfielders.join(', ')}`;
-
-                const forwards = document.createElement('p');
-                forwards.innerHTML = `<strong>Forwards:</strong> ${team.forwards.join(', ')}`;
-
-                teamDiv.appendChild(submitterName);
-                teamDiv.appendChild(goalkeeper);
-                teamDiv.appendChild(defenders);
-                teamDiv.appendChild(midfielders);
-                teamDiv.appendChild(forwards);
-
-                teamsContainer.appendChild(teamDiv);
+                const teamCard = document.createElement('div');
+                teamCard.className = 'team-card';
+                teamCard.innerHTML = `
+                    <h3>${team.submitterName}'s Team</h3>
+                    <div class="team-details">
+                        <p><strong>Goalkeeper:</strong> ${team.goalkeeper}</p>
+                        <p><strong>Defenders:</strong> ${team.defenders.join(', ')}</p>
+                        <p><strong>Midfielders:</strong> ${team.midfielders.join(', ')}</p>
+                        <p><strong>Forwards:</strong> ${team.forwards.join(', ')}</p>
+                    </div>
+                `;
+                teamsContainer.appendChild(teamCard);
             });
 
         } catch (error) {
             console.error('Error fetching teams:', error);
-            teamsContainer.innerHTML = `<p class="error">Error loading teams: ${error.message}</p>`;
+            teamsContainer.innerHTML = '<p class="error">Failed to load teams. Please try again later.</p>';
         }
     };
 
     // Form submission handler
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        messageElement.textContent = 'Saving team...';
-        messageElement.className = 'message';
+        setLoading(true);
+        showMessage('Saving team...', 'info');
 
         try {
             const team = {
                 submitterName: document.getElementById('submitterName').value.trim(),
                 goalkeeper: document.getElementById('goalkeeper').value.trim(),
-                defenders: collectPlayers(document.getElementById('defendersGroup')),
-                midfielders: collectPlayers(document.getElementById('midfieldersGroup')),
-                forwards: collectPlayers(document.getElementById('forwardsGroup'))
+                defenders: collectPlayers('defendersGroup'),
+                midfielders: collectPlayers('midfieldersGroup'),
+                forwards: collectPlayers('forwardsGroup')
             };
 
-            // Validation
-            if (!team.submitterName || !team.goalkeeper) {
-                throw new Error('Please fill in your name and goalkeeper');
-            }
-
-            if (team.defenders.length < 3 || team.defenders.length > 5) {
-                throw new Error('You must select between 3 and 5 defenders');
-            }
-
-            if (team.midfielders.length < 3 || team.midfielders.length > 5) {
-                throw new Error('You must select between 3 and 5 midfielders');
-            }
-
-            if (team.forwards.length < 1 || team.forwards.length > 3) {
-                throw new Error('You must select between 1 and 3 forwards');
+            // Validate form data
+            const errors = validateForm(team);
+            if (errors.length > 0) {
+                throw new Error(errors.join('\n'));
             }
 
             const res = await fetch('/team', {
@@ -118,15 +142,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.message || 'Failed to save team');
             }
 
-            messageElement.textContent = 'Team saved successfully!';
-            messageElement.className = 'message success';
+            showMessage('Team saved successfully!', 'success');
             form.reset();
             await fetchAndDisplayTeams();
 
         } catch (error) {
             console.error('Error:', error);
-            messageElement.textContent = `Error: ${error.message}`;
-            messageElement.className = 'message error';
+            showMessage(error.message, 'error');
+        } finally {
+            setLoading(false);
         }
     });
 
