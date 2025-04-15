@@ -1,160 +1,201 @@
+// Wait for the DOM to be fully loaded before running any code
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('teamForm');
-    const messageElement = document.getElementById('message');
-    const teamsContainer = document.getElementById('teamsList');
-    const submitButton = form.querySelector('button[type="submit"]');
+    // Get references to important elements in the HTML
+    const teamForm = document.getElementById('teamForm');
+    const messageDiv = document.getElementById('message');
+    const teamsListDiv = document.getElementById('teamsList');
+    const submitButton = teamForm.querySelector('button[type="submit"]');
 
-    // Loading state management
-    const setLoading = (isLoading) => {
-        submitButton.disabled = isLoading;
-        submitButton.textContent = isLoading ? 'Saving...' : 'Save Team';
-        if (isLoading) {
-            submitButton.classList.add('loading');
-        } else {
-            submitButton.classList.remove('loading');
-        }
-    };
-
-    // Function to show messages with different types
-    const showMessage = (message, type = 'info') => {
-        messageElement.textContent = message;
-        messageElement.className = `message ${type}`;
-        messageElement.style.display = 'block';
-        
-        // Auto-hide success messages after 3 seconds
-        if (type === 'success') {
-            setTimeout(() => {
-                messageElement.style.display = 'none';
-            }, 3000);
-        }
-    };
-
-    // Function to collect players from a position group
-    const collectPlayers = (positionGroupId) => {
-        const inputs = document.querySelectorAll(`#${positionGroupId} input[type="text"]`);
+    /**
+     * Collects all player names from input fields of a specific position
+     * @param {string} className - The CSS class name for the position (e.g., 'defender', 'midfielder')
+     * @returns {string[]} Array of player names (empty strings are filtered out)
+     */
+    function collectPlayers(className) {
+        // Find all input fields with the specified class
+        const inputs = teamForm.querySelectorAll(`input.${className}`);
+        // Convert inputs to an array and get their values
+        // Filter out any empty strings (optional players not filled in)
         return Array.from(inputs)
             .map(input => input.value.trim())
-            .filter(name => name !== '');
-    };
+            .filter(value => value !== '');
+    }
 
-    // Function to validate form data
-    const validateForm = (team) => {
-        const errors = [];
+    /**
+     * Shows a message to the user (success or error)
+     * @param {string} text - The message to display
+     * @param {string} type - The type of message ('success' or 'error')
+     */
+    function showMessage(text, type) {
+        // Set the message text and styling
+        messageDiv.textContent = text;
+        messageDiv.className = `message ${type}`;
+        messageDiv.style.display = 'block';
 
-        if (!team.submitterName) {
-            errors.push('Please enter your name');
-        }
+        // Hide the message after 5 seconds
+        setTimeout(() => {
+            messageDiv.style.display = 'none';
+        }, 5000);
+    }
 
-        if (!team.goalkeeper) {
-            errors.push('Please select a goalkeeper');
-        }
+    /**
+     * Creates an HTML element to display a saved team
+     * @param {Object} team - The team data object
+     * @returns {HTMLElement} A div element containing the team information
+     */
+    function createTeamElement(team) {
+        // Create the main container for the team
+        const teamDiv = document.createElement('div');
+        teamDiv.className = 'team-card';
 
-        if (team.defenders.length < 3 || team.defenders.length > 5) {
-            errors.push('You must select between 3 and 5 defenders');
-        }
+        // Add the team creator's name
+        const nameHeading = document.createElement('h3');
+        nameHeading.textContent = `${team.submitterName}'s Team`;
+        teamDiv.appendChild(nameHeading);
 
-        if (team.midfielders.length < 3 || team.midfielders.length > 5) {
-            errors.push('You must select between 3 and 5 midfielders');
-        }
+        // Create sections for each position group
+        const positions = [
+            { title: 'Goalkeeper', players: [team.goalkeeper] },
+            { title: 'Defenders', players: team.defenders },
+            { title: 'Midfielders', players: team.midfielders },
+            { title: 'Forwards', players: team.forwards }
+        ];
 
-        if (team.forwards.length < 1 || team.forwards.length > 3) {
-            errors.push('You must select between 1 and 3 forwards');
-        }
+        // Add each position group to the team card
+        positions.forEach(({ title, players }) => {
+            const section = document.createElement('div');
+            section.innerHTML = `
+                <strong>${title}:</strong>
+                <ul class="player-list">
+                    ${players.map(player => `<li>${player}</li>`).join('')}
+                </ul>
+            `;
+            teamDiv.appendChild(section);
+        });
 
-        return errors;
-    };
+        return teamDiv;
+    }
 
-    // Function to fetch and display teams
-    const fetchAndDisplayTeams = async () => {
+    /**
+     * Fetches all saved teams from the server and displays them
+     * Shows newest teams first (reverse chronological order)
+     */
+    async function fetchAndDisplayTeams() {
         try {
-            teamsContainer.innerHTML = '<div class="loading">Loading teams...</div>';
-            
-            const res = await fetch('/teams');
-            if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-            }
-            
-            const teams = await res.json();
-
-            if (!Array.isArray(teams)) {
-                throw new Error('Invalid data format received from server');
+            // Fetch teams from the server
+            const response = await fetch('/teams');
+            if (!response.ok) {
+                throw new Error('Failed to fetch teams');
             }
 
-            teamsContainer.innerHTML = '';
+            const teams = await response.json();
 
-            if (teams.length === 0) {
-                teamsContainer.innerHTML = '<p class="no-teams">No teams saved yet. Be the first to create one!</p>';
-                return;
-            }
+            // Clear the current list of teams
+            teamsListDiv.innerHTML = '';
 
-            // Display teams in reverse chronological order
+            // Display teams in reverse order (newest first)
             teams.reverse().forEach(team => {
-                const teamCard = document.createElement('div');
-                teamCard.className = 'team-card';
-                teamCard.innerHTML = `
-                    <h3>${team.submitterName}'s Team</h3>
-                    <div class="team-details">
-                        <p><strong>Goalkeeper:</strong> ${team.goalkeeper}</p>
-                        <p><strong>Defenders:</strong> ${team.defenders.join(', ')}</p>
-                        <p><strong>Midfielders:</strong> ${team.midfielders.join(', ')}</p>
-                        <p><strong>Forwards:</strong> ${team.forwards.join(', ')}</p>
-                    </div>
-                `;
-                teamsContainer.appendChild(teamCard);
+                const teamElement = createTeamElement(team);
+                teamsListDiv.appendChild(teamElement);
             });
-
         } catch (error) {
             console.error('Error fetching teams:', error);
-            teamsContainer.innerHTML = '<p class="error">Failed to load teams. Please try again later.</p>';
+            showMessage('Failed to load teams. Please try again later.', 'error');
         }
-    };
+    }
 
-    // Form submission handler
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        showMessage('Saving team...', 'info');
+    // Handle form submission
+    teamForm.addEventListener('submit', async (event) => {
+        // Prevent the default form submission
+        event.preventDefault();
 
         try {
-            const team = {
+            // Show loading state on the submit button
+            submitButton.disabled = true;
+            submitButton.classList.add('loading');
+
+            // Collect all the form data
+            const teamData = {
                 submitterName: document.getElementById('submitterName').value.trim(),
                 goalkeeper: document.getElementById('goalkeeper').value.trim(),
-                defenders: collectPlayers('defendersGroup'),
-                midfielders: collectPlayers('midfieldersGroup'),
-                forwards: collectPlayers('forwardsGroup')
+                defenders: collectPlayers('defender'),
+                midfielders: collectPlayers('midfielder'),
+                forwards: collectPlayers('forward')
             };
 
-            // Validate form data
-            const errors = validateForm(team);
+            // Validate the team composition
+            const errors = [];
+
+            // Check if submitter name is provided
+            if (!teamData.submitterName) {
+                errors.push('Please enter your name');
+            }
+
+            // Check if goalkeeper is provided
+            if (!teamData.goalkeeper) {
+                errors.push('Please select a goalkeeper');
+            }
+
+            // Check number of defenders (3-5 required)
+            if (teamData.defenders.length < 3) {
+                errors.push('You must select at least 3 defenders');
+            } else if (teamData.defenders.length > 5) {
+                errors.push('You cannot select more than 5 defenders');
+            }
+
+            // Check number of midfielders (3-5 required)
+            if (teamData.midfielders.length < 3) {
+                errors.push('You must select at least 3 midfielders');
+            } else if (teamData.midfielders.length > 5) {
+                errors.push('You cannot select more than 5 midfielders');
+            }
+
+            // Check number of forwards (1-3 required)
+            if (teamData.forwards.length < 1) {
+                errors.push('You must select at least 1 forward');
+            } else if (teamData.forwards.length > 3) {
+                errors.push('You cannot select more than 3 forwards');
+            }
+
+            // If there are any validation errors, throw them
             if (errors.length > 0) {
                 throw new Error(errors.join('\n'));
             }
 
-            const res = await fetch('/team', {
+            // Send the team data to the server
+            const response = await fetch('/team', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(team)
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(teamData)
             });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || 'Failed to save team');
+            // Handle the server response
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to save team');
             }
 
+            // Show success message and reset the form
             showMessage('Team saved successfully!', 'success');
-            form.reset();
+            teamForm.reset();
+
+            // Refresh the displayed teams list
             await fetchAndDisplayTeams();
 
         } catch (error) {
-            console.error('Error:', error);
-            showMessage(error.message, 'error');
+            // Show error message to the user
+            showMessage(error.message || 'Failed to save team', 'error');
+            console.error('Error saving team:', error);
         } finally {
-            setLoading(false);
+            // Reset the submit button state
+            submitButton.disabled = false;
+            submitButton.classList.remove('loading');
         }
     });
 
-    // Initial load of teams
+    // Load and display saved teams when the page loads
     fetchAndDisplayTeams();
 });
   
