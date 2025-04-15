@@ -2,6 +2,24 @@
 
 This document provides detailed information about the Dream XI API endpoints, their usage, and examples.
 
+## Table of Contents
+
+- [Dream XI API Documentation](#dream-xi-api-documentation)
+  - [Table of Contents](#table-of-contents)
+  - [Base URL](#base-url)
+  - [Endpoints](#endpoints)
+    - [1. Health Check](#1-health-check)
+    - [2. Get All Teams](#2-get-all-teams)
+    - [3. Save a Team](#3-save-a-team)
+  - [Error Handling](#error-handling)
+  - [Rate Limiting](#rate-limiting)
+  - [CORS](#cors)
+  - [Security Headers](#security-headers)
+  - [Example Usage](#example-usage)
+    - [JavaScript Fetch Example](#javascript-fetch-example)
+    - [cURL Examples](#curl-examples)
+  - [Support](#support)
+
 ## Base URL
 
 The base URL for all API endpoints is:
