@@ -1,70 +1,70 @@
 /**
- * TeamDisplay class handles rendering teams in the UI
+ * TeamDisplay - Manages how teams are displayed in the UI
+ * This class handles:
+ * 1. Creating team cards
+ * 2. Showing/hiding loading states
+ * 3. Displaying messages to the user
  */
 export class TeamDisplay {
     /**
      * Creates a new TeamDisplay instance
-     * @param {HTMLElement} container - Container element for displaying teams
+     * @param {HTMLElement} container - The HTML element where teams will be displayed
      */
     constructor(container) {
         this.container = container;
     }
 
     /**
-     * Creates a team element for display
-     * @param {Object} team - Team data to display
-     * @returns {HTMLElement} Team element
+     * Creates an HTML element for a team
+     * @param {Object} team - The team data
+     * @returns {HTMLElement} The team card element
      */
     createTeamElement(team) {
-        const teamElement = document.createElement('div');
-        teamElement.className = 'team-card';
-        teamElement.innerHTML = `
-            <h3>${team.submitter}'s Team</h3>
-            <div class="team-details">
-                <div class="position-group">
-                    <h4>Goalkeeper</h4>
-                    <p>${team.goalkeeper}</p>
-                </div>
-                <div class="position-group">
-                    <h4>Defenders</h4>
-                    <ul>
-                        ${team.defenders.map(defender => `<li>${defender}</li>`).join('')}
-                    </ul>
-                </div>
-                <div class="position-group">
-                    <h4>Midfielders</h4>
-                    <ul>
-                        ${team.midfielders.map(midfielder => `<li>${midfielder}</li>`).join('')}
-                    </ul>
-                </div>
-                <div class="position-group">
-                    <h4>Forwards</h4>
-                    <ul>
-                        ${team.forwards.map(forward => `<li>${forward}</li>`).join('')}
-                    </ul>
-                </div>
-            </div>
-            <div class="team-meta">
-                <small>Created: ${new Date(team.createdAt).toLocaleString()}</small>
-            </div>
-        `;
-        return teamElement;
+        const teamDiv = document.createElement('div');
+        teamDiv.className = 'team-card';
+        
+        // Add team creator's name
+        const nameHeading = document.createElement('h3');
+        nameHeading.textContent = `${team.submitterName}'s Team`;
+        teamDiv.appendChild(nameHeading);
+
+        // Create sections for each position group
+        const positions = [
+            { title: 'Goalkeeper', players: [team.goalkeeper] },
+            { title: 'Defenders', players: team.defenders },
+            { title: 'Midfielders', players: team.midfielders },
+            { title: 'Forwards', players: team.forwards }
+        ];
+
+        // Add each position group to the team card
+        positions.forEach(({ title, players }) => {
+            const section = document.createElement('div');
+            section.innerHTML = `
+                <strong>${title}:</strong>
+                <ul class="player-list">
+                    ${players.map(player => `<li>${player}</li>`).join('')}
+                </ul>
+            `;
+            teamDiv.appendChild(section);
+        });
+
+        return teamDiv;
     }
 
     /**
-     * Displays a list of teams
+     * Displays a list of teams in the container
      * @param {Array} teams - Array of team objects to display
      */
     displayTeams(teams) {
-        // Clear existing teams
+        // Clear the container
         this.container.innerHTML = '';
-        
+
         if (teams.length === 0) {
-            this.container.innerHTML = '<p class="no-teams">No teams have been submitted yet.</p>';
+            this.showMessage('No teams have been submitted yet.', 'info');
             return;
         }
 
-        // Display teams in reverse chronological order
+        // Display teams in reverse order (newest first)
         teams.reverse().forEach(team => {
             const teamElement = this.createTeamElement(team);
             this.container.appendChild(teamElement);
@@ -73,43 +73,35 @@ export class TeamDisplay {
 
     /**
      * Shows a message to the user
-     * @param {string} message - Message to display
-     * @param {string} type - Message type ('success', 'error', or 'info')
+     * @param {string} text - The message to display
+     * @param {string} type - The type of message ('success', 'error', or 'info')
      */
-    showMessage(message, type = 'info') {
-        const messageElement = document.createElement('div');
-        messageElement.className = `message ${type}`;
-        messageElement.textContent = message;
+    showMessage(text, type = 'info') {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+        messageDiv.textContent = text;
         
-        // Remove any existing messages
-        const existingMessage = document.querySelector('.message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
+        // Add the message to the container
+        this.container.insertBefore(messageDiv, this.container.firstChild);
         
-        // Add new message
-        document.body.insertBefore(messageElement, document.body.firstChild);
-        
-        // Remove message after 5 seconds
+        // Remove the message after 5 seconds
         setTimeout(() => {
-            messageElement.remove();
+            messageDiv.remove();
         }, 5000);
     }
 
     /**
-     * Shows a loading state
-     * @param {boolean} isLoading - Whether to show or hide loading state
+     * Sets the loading state of a button
+     * @param {HTMLButtonElement} button - The button to update
+     * @param {boolean} isLoading - Whether the button should show loading state
      */
-    setLoading(isLoading) {
-        const submitButton = document.getElementById('submitButton');
-        if (submitButton) {
-            if (isLoading) {
-                submitButton.classList.add('loading');
-                submitButton.disabled = true;
-            } else {
-                submitButton.classList.remove('loading');
-                submitButton.disabled = false;
-            }
+    setLoading(button, isLoading) {
+        if (isLoading) {
+            button.disabled = true;
+            button.classList.add('loading');
+        } else {
+            button.disabled = false;
+            button.classList.remove('loading');
         }
     }
 } 
