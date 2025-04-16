@@ -28,26 +28,18 @@ export class FormManager {
      * @returns {Object} The collected form data
      */
     collectFormData() {
-        const formData = new FormData(this.form);
         return {
-            submitterName: formData.get('submitterName'),
-            goalkeeper: formData.get('goalkeeper'),
-            defenders: [
-                formData.get('defender1'),
-                formData.get('defender2'),
-                formData.get('defender3'),
-                formData.get('defender4')
-            ],
-            midfielders: [
-                formData.get('midfielder1'),
-                formData.get('midfielder2'),
-                formData.get('midfielder3'),
-                formData.get('midfielder4')
-            ],
-            forwards: [
-                formData.get('forward1'),
-                formData.get('forward2')
-            ]
+            submitterName: this.form.querySelector('#submitterName').value,
+            goalkeeper: this.form.querySelector('#goalkeeper').value,
+            defenders: Array.from(this.form.querySelectorAll('.defender'))
+                .map(input => input.value)
+                .filter(value => value.trim() !== ''),
+            midfielders: Array.from(this.form.querySelectorAll('.midfielder'))
+                .map(input => input.value)
+                .filter(value => value.trim() !== ''),
+            forwards: Array.from(this.form.querySelectorAll('.forward'))
+                .map(input => input.value)
+                .filter(value => value.trim() !== '')
         };
     }
 
@@ -69,26 +61,26 @@ export class FormManager {
             errors.push('Please select a goalkeeper');
         }
 
-        // Validate defenders
-        data.defenders.forEach((defender, index) => {
-            if (!defender.trim()) {
-                errors.push(`Please select defender ${index + 1}`);
-            }
-        });
+        // Validate defenders (3-5 required)
+        if (data.defenders.length < 3) {
+            errors.push('Please select at least 3 defenders');
+        } else if (data.defenders.length > 5) {
+            errors.push('Maximum 5 defenders allowed');
+        }
 
-        // Validate midfielders
-        data.midfielders.forEach((midfielder, index) => {
-            if (!midfielder.trim()) {
-                errors.push(`Please select midfielder ${index + 1}`);
-            }
-        });
+        // Validate midfielders (3-5 required)
+        if (data.midfielders.length < 3) {
+            errors.push('Please select at least 3 midfielders');
+        } else if (data.midfielders.length > 5) {
+            errors.push('Maximum 5 midfielders allowed');
+        }
 
-        // Validate forwards
-        data.forwards.forEach((forward, index) => {
-            if (!forward.trim()) {
-                errors.push(`Please select forward ${index + 1}`);
-            }
-        });
+        // Validate forwards (1-3 required)
+        if (data.forwards.length < 1) {
+            errors.push('Please select at least 1 forward');
+        } else if (data.forwards.length > 3) {
+            errors.push('Maximum 3 forwards allowed');
+        }
 
         return errors;
     }
