@@ -4,10 +4,14 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+// Get MongoDB URI from environment or use default
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dream-xi';
 
 export const connectDB = async () => {
     try {
+        console.log('Attempting to connect to MongoDB...');
+        console.log('Using URI:', MONGODB_URI.replace(/\/\/[^@]*@/, '//****:****@')); // Hide credentials in logs
+        
         await mongoose.connect(MONGODB_URI, {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
@@ -15,9 +19,16 @@ export const connectDB = async () => {
             retryWrites: true,
             w: 'majority'
         });
+        
         console.log('MongoDB connected successfully');
     } catch (error) {
         console.error('MongoDB connection error:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
         process.exit(1);
     }
 };

@@ -19,16 +19,24 @@ const __dirname = dirname(__filename);
 // This is our server that will handle requests
 const app = express();
 
-// Connect to MongoDB
-connectDB();
-
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Define where we'll store our team data
-// We use join() to create a path that works on any operating system
-const TEAM_FILE = join(__dirname, 'team.json');
+// Connect to MongoDB
+let isConnected = false;
+const connectWithRetry = async () => {
+    try {
+        await connectDB();
+        isConnected = true;
+    } catch (error) {
+        console.error('Failed to connect to MongoDB, retrying in 5 seconds...');
+        setTimeout(connectWithRetry, 5000);
+    }
+};
+
+// Start MongoDB connection
+connectWithRetry();
 
 // Middleware to parse JSON data from requests
 // This lets us read JSON data sent in requests
@@ -120,7 +128,11 @@ const validateTeam = (req, res, next) => {
 
 // Health check endpoint
 app.get('/ping', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        mongodb: isConnected ? 'connected' : 'connecting'
+    });
 });
 
 // GET /teams route - Returns all saved teams
@@ -211,6 +223,9 @@ app.post('/team', validateTeam, async (req, res, next) => {
 // Get all teams
 app.get('/api/teams', async (req, res, next) => {
     try {
+        if (!isConnected) {
+            throw new Error('Database not connected');
+        }
         const teams = await Team.find().sort({ createdAt: -1 });
         res.json(teams);
     } catch (error) {
@@ -315,4 +330,6 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log('Team file location:', TEAM_FILE);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`MongoDB Status: ${isConnected ? 'Connected' : 'Connecting...'}`);
 });
