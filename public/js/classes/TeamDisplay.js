@@ -51,15 +51,42 @@ export class TeamDisplay extends BaseComponent {
      * @returns {string} HTML string for team card
      */
     createTeamCard(team) {
+        const formation = team.formation.split('-').join('-');
+        const totalPlayers = team.getTotalPlayers();
+        
         return `
-            <div class="team-card">
-                <h3>${team.submitterName}'s Team</h3>
+            <div class="team-card" data-team-id="${team._id}">
+                <div class="team-header">
+                    <h3>${team.name}</h3>
+                    <span class="formation-badge">${formation}</span>
+                </div>
                 <div class="team-details">
-                    <p><strong>Goalkeeper:</strong> ${team.goalkeeper}</p>
-                    <p><strong>Defenders:</strong> ${team.defenders.join(', ')}</p>
-                    <p><strong>Midfielders:</strong> ${team.midfielders.join(', ')}</p>
-                    <p><strong>Forwards:</strong> ${team.forwards.join(', ')}</p>
-                    <p class="timestamp">Created: ${new Date(team.createdAt).toLocaleString()}</p>
+                    <div class="position-group">
+                        <h4>Goalkeeper</h4>
+                        <p>${team.players.goalkeeper}</p>
+                    </div>
+                    <div class="position-group">
+                        <h4>Defenders (${team.players.defenders.length})</h4>
+                        <ul>
+                            ${team.players.defenders.map(player => `<li>${player}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="position-group">
+                        <h4>Midfielders (${team.players.midfielders.length})</h4>
+                        <ul>
+                            ${team.players.midfielders.map(player => `<li>${player}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="position-group">
+                        <h4>Forwards (${team.players.forwards.length})</h4>
+                        <ul>
+                            ${team.players.forwards.map(player => `<li>${player}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+                <div class="team-footer">
+                    <span class="total-players">Total Players: ${totalPlayers}</span>
+                    <span class="timestamp">Created: ${new Date(team.createdAt).toLocaleString()}</span>
                 </div>
             </div>
         `;
@@ -71,7 +98,12 @@ export class TeamDisplay extends BaseComponent {
     showLoading() {
         const { container } = this.getState();
         this.setState({ isLoading: true });
-        container.innerHTML = '<div class="loading">Loading teams...</div>';
+        container.innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading teams...</p>
+            </div>
+        `;
     }
 
     /**
@@ -81,7 +113,31 @@ export class TeamDisplay extends BaseComponent {
     showError(message) {
         const { container } = this.getState();
         this.setState({ error: message, isLoading: false });
-        container.innerHTML = `<div class="error">${message}</div>`;
+        container.innerHTML = `
+            <div class="error">
+                <p>${message}</p>
+                <button class="retry-button">Try Again</button>
+            </div>
+        `;
+        
+        const retryButton = container.querySelector('.retry-button');
+        if (retryButton) {
+            retryButton.addEventListener('click', () => {
+                this.trigger('retry');
+            });
+        }
+    }
+
+    showSuccess(message) {
+        const { container } = this.getState();
+        const successElement = document.createElement('div');
+        successElement.className = 'success';
+        successElement.textContent = message;
+        container.insertBefore(successElement, container.firstChild);
+        
+        setTimeout(() => {
+            successElement.remove();
+        }, 3000);
     }
 
     /**
@@ -98,6 +154,12 @@ export class TeamDisplay extends BaseComponent {
      */
     beforeDestroy() {
         this.clear();
+        this.setState({
+            container: null,
+            teams: [],
+            isLoading: false,
+            error: null
+        });
         this.trigger('beforeDestroy');
     }
 } 

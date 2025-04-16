@@ -27,7 +27,7 @@ export class TeamService extends BaseComponent {
             this.setState({ isLoading: true, error: null });
             this.log('Fetching all teams');
 
-            const response = await fetch(`${this.getState().baseUrl}/teams`);
+            const response = await fetch(`${this.getState().baseUrl}/api/teams`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -43,6 +43,66 @@ export class TeamService extends BaseComponent {
         } catch (error) {
             this.setState({ error: error.message, isLoading: false });
             this.handleError(error, 'Fetching teams');
+            throw error;
+        }
+    }
+
+    /**
+     * Fetches teams by formation
+     * @param {string} formation - Formation to search for
+     * @returns {Promise<Array>} Array of Team instances
+     */
+    async getTeamsByFormation(formation) {
+        try {
+            this.setState({ isLoading: true, error: null });
+            this.log(`Fetching teams with formation: ${formation}`);
+
+            const response = await fetch(`${this.getState().baseUrl}/api/teams/formation/${formation}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const teams = data.map(teamData => new Team(teamData));
+            
+            this.setState({ isLoading: false });
+            this.trigger('teamsLoaded', teams);
+            
+            return teams;
+        } catch (error) {
+            this.setState({ error: error.message, isLoading: false });
+            this.handleError(error, 'Fetching teams by formation');
+            throw error;
+        }
+    }
+
+    /**
+     * Fetches teams containing a specific player
+     * @param {string} playerName - Player name to search for
+     * @returns {Promise<Array>} Array of Team instances
+     */
+    async getTeamsByPlayer(playerName) {
+        try {
+            this.setState({ isLoading: true, error: null });
+            this.log(`Fetching teams with player: ${playerName}`);
+
+            const response = await fetch(`${this.getState().baseUrl}/api/teams/player/${encodeURIComponent(playerName)}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const teams = data.map(teamData => new Team(teamData));
+            
+            this.setState({ isLoading: false });
+            this.trigger('teamsLoaded', teams);
+            
+            return teams;
+        } catch (error) {
+            this.setState({ error: error.message, isLoading: false });
+            this.handleError(error, 'Fetching teams by player');
             throw error;
         }
     }
@@ -66,7 +126,7 @@ export class TeamService extends BaseComponent {
             this.setState({ isLoading: true, error: null });
             this.log('Saving team');
 
-            const response = await fetch(`${this.getState().baseUrl}/team`, {
+            const response = await fetch(`${this.getState().baseUrl}/api/teams`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -75,7 +135,8 @@ export class TeamService extends BaseComponent {
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
 
             const result = await response.json();
@@ -91,6 +152,77 @@ export class TeamService extends BaseComponent {
     }
 
     /**
+     * Updates an existing team
+     * @param {string} id - Team ID
+     * @param {Team} team - Updated team data
+     * @returns {Promise<Object>} Updated team
+     */
+    async updateTeam(id, team) {
+        try {
+            if (!(team instanceof Team)) {
+                throw new Error('Invalid team object');
+            }
+
+            this.setState({ isLoading: true, error: null });
+            this.log(`Updating team: ${id}`);
+
+            const response = await fetch(`${this.getState().baseUrl}/api/teams/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(team.toJSON())
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            this.setState({ isLoading: false });
+            this.trigger('teamUpdated', result);
+            
+            return result;
+        } catch (error) {
+            this.setState({ error: error.message, isLoading: false });
+            this.handleError(error, 'Updating team');
+            throw error;
+        }
+    }
+
+    /**
+     * Deletes a team
+     * @param {string} id - Team ID
+     * @returns {Promise<Object>} Deletion result
+     */
+    async deleteTeam(id) {
+        try {
+            this.setState({ isLoading: true, error: null });
+            this.log(`Deleting team: ${id}`);
+
+            const response = await fetch(`${this.getState().baseUrl}/api/teams/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            this.setState({ isLoading: false });
+            this.trigger('teamDeleted', id);
+            
+            return result;
+        } catch (error) {
+            this.setState({ error: error.message, isLoading: false });
+            this.handleError(error, 'Deleting team');
+            throw error;
+        }
+    }
+
+    /**
      * Gets the current loading state
      * @returns {boolean} True if loading
      */
@@ -100,31 +232,32 @@ export class TeamService extends BaseComponent {
 
     /**
      * Gets the current error state
-     * @returns {string|null} Current error message or null
+     * @returns {string|null} Error message or null
      */
     getError() {
         return this.getState().error;
     }
 
     /**
-     * Gets all cached teams
-     * @returns {Array<Team>} Array of Team instances
+     * Gets the cached teams
+     * @returns {Array} Array of Team instances
      */
     getCachedTeams() {
-        return [...this.getState().teams];
+        return this.getState().teams;
     }
 
     /**
-     * Clears the error state
+     * Clears the current error state
      */
     clearError() {
         this.setState({ error: null });
     }
 
     /**
-     * Lifecycle method called before component is destroyed
+     * Cleanup before component destruction
      */
     beforeDestroy() {
-        this.trigger('beforeDestroy');
+        this.clearError();
+        this.setState({ teams: [], isLoading: false });
     }
 } 

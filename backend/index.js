@@ -6,6 +6,9 @@ import express from 'express';
 import { writeFile, readFile } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import cors from 'cors';
+import { connectDB } from './config/database.js';
+import Team from './models/Team.js';
 
 // Get the current file's directory path
 // This is needed because we're using ES modules (import/export)
@@ -15,6 +18,13 @@ const __dirname = dirname(__filename);
 // Create an Express application
 // This is our server that will handle requests
 const app = express();
+
+// Connect to MongoDB
+connectDB();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
 
 // Define where we'll store our team data
 // We use join() to create a path that works on any operating system
@@ -108,8 +118,7 @@ const validateTeam = (req, res, next) => {
     next();
 };
 
-// Simple ping route to check if the server is running
-// Returns the current time to help with debugging
+// Health check endpoint
 app.get('/ping', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -193,6 +202,106 @@ app.post('/team', validateTeam, async (req, res, next) => {
     } catch (error) {
         console.error('Error saving team:', error);
         // Pass any errors to the error handler
+        next(error);
+    }
+});
+
+// Routes
+
+// Get all teams
+app.get('/api/teams', async (req, res, next) => {
+    try {
+        const teams = await Team.find().sort({ createdAt: -1 });
+        res.json(teams);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Get teams by formation
+app.get('/api/teams/formation/:formation', async (req, res, next) => {
+    try {
+        const teams = await Team.findByFormation(req.params.formation);
+        res.json(teams);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Get teams with specific player
+app.get('/api/teams/player/:playerName', async (req, res, next) => {
+    try {
+        const teams = await Team.findByPlayer(req.params.playerName);
+        res.json(teams);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Create a new team
+app.post('/api/teams', async (req, res, next) => {
+    try {
+        const team = new Team(req.body);
+        await team.save();
+        res.status(201).json(team);
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            res.status(400).json({
+                message: 'Validation Error',
+                details: error.errors
+            });
+        } else {
+            next(error);
+        }
+    }
+});
+
+// Get a specific team
+app.get('/api/teams/:id', async (req, res, next) => {
+    try {
+        const team = await Team.findById(req.params.id);
+        if (!team) {
+            return res.status(404).json({ message: 'Team not found' });
+        }
+        res.json(team);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Update a team
+app.put('/api/teams/:id', async (req, res, next) => {
+    try {
+        const team = await Team.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+        if (!team) {
+            return res.status(404).json({ message: 'Team not found' });
+        }
+        res.json(team);
+    } catch (error) {
+        if (error.name === 'ValidationError') {
+            res.status(400).json({
+                message: 'Validation Error',
+                details: error.errors
+            });
+        } else {
+            next(error);
+        }
+    }
+});
+
+// Delete a team
+app.delete('/api/teams/:id', async (req, res, next) => {
+    try {
+        const team = await Team.findByIdAndDelete(req.params.id);
+        if (!team) {
+            return res.status(404).json({ message: 'Team not found' });
+        }
+        res.json({ message: 'Team deleted successfully' });
+    } catch (error) {
         next(error);
     }
 });
