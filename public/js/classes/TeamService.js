@@ -1,17 +1,18 @@
+import { BaseComponent } from './BaseComponent.js';
+
 /**
  * TeamService - Handles communication with the backend API
- * This class manages:
- * 1. Fetching teams from the server
- * 2. Saving teams to the server
- * 3. Error handling for API requests
+ * Extends BaseComponent to get common functionality
  */
-export class TeamService {
+export class TeamService extends BaseComponent {
     /**
      * Creates a new TeamService instance
      * @param {string} baseUrl - The base URL for the API
      */
     constructor(baseUrl = '') {
+        super();
         this.baseUrl = baseUrl;
+        this.log('TeamService initialized');
     }
 
     /**
@@ -21,6 +22,7 @@ export class TeamService {
      */
     async getAllTeams() {
         try {
+            this.log('Fetching all teams');
             const response = await fetch(`${this.baseUrl}/teams`);
             
             if (!response.ok) {
@@ -28,10 +30,12 @@ export class TeamService {
             }
             
             const teams = await response.json();
-            return Array.isArray(teams) ? teams : [];
+            const result = Array.isArray(teams) ? teams : [];
+            this.log(`Successfully fetched ${result.length} teams`);
+            return result;
         } catch (error) {
-            console.error('Error fetching teams:', error);
-            throw new Error('Failed to fetch teams');
+            this.handleError(error, 'Fetching teams');
+            throw error;
         }
     }
 
@@ -43,6 +47,7 @@ export class TeamService {
      */
     async saveTeam(team) {
         try {
+            this.log('Saving team');
             const response = await fetch(`${this.baseUrl}/team`, {
                 method: 'POST',
                 headers: {
@@ -56,10 +61,12 @@ export class TeamService {
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
             
-            return await response.json();
+            const result = await response.json();
+            this.log('Team saved successfully');
+            return result;
         } catch (error) {
-            console.error('Error saving team:', error);
-            throw new Error('Failed to save team');
+            this.handleError(error, 'Saving team');
+            throw error;
         }
     }
 
@@ -70,13 +77,39 @@ export class TeamService {
      */
     async checkHealth() {
         try {
+            this.log('Checking server health');
             const response = await fetch(`${this.baseUrl}/health`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
+            this.log('Server is healthy');
             return true;
         } catch (error) {
-            console.error('Error checking server health:', error);
+            this.handleError(error, 'Checking server health');
+            throw error;
+        }
+    }
+
+    /**
+     * Gets a team by its ID
+     * @param {string} id - The team ID
+     * @returns {Promise<Object>} The team data
+     * @throws {Error} If the request fails
+     */
+    async getTeamById(id) {
+        try {
+            this.log(`Fetching team with ID: ${id}`);
+            const response = await fetch(`${this.baseUrl}/teams/${id}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const team = await response.json();
+            this.log('Team fetched successfully');
+            return team;
+        } catch (error) {
+            this.handleError(error, 'Fetching team by ID');
             throw error;
         }
     }

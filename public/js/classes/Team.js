@@ -1,7 +1,10 @@
+import { BaseComponent } from './BaseComponent.js';
+
 /**
  * Team class handles team data and validation
+ * Extends BaseComponent to get common functionality
  */
-export class Team {
+export class Team extends BaseComponent {
     /**
      * Creates a new team instance
      * @param {Object} data - Team data
@@ -12,12 +15,15 @@ export class Team {
      * @param {Array} data.forwards - Array of forward names
      */
     constructor(data) {
+        super();
         this.submitterName = data.submitterName;
         this.goalkeeper = data.goalkeeper;
         this.defenders = data.defenders;
         this.midfielders = data.midfielders;
         this.forwards = data.forwards;
         this.createdAt = new Date().toISOString();
+        
+        this.log('Team instance created');
     }
 
     /**
@@ -25,27 +31,33 @@ export class Team {
      * @returns {Object} Validation result with isValid and message
      */
     validate() {
-        if (!this.submitterName) {
-            return { isValid: false, message: 'Please enter your name' };
-        }
+        try {
+            if (!this.submitterName?.trim()) {
+                return { isValid: false, message: 'Please enter your name' };
+            }
 
-        if (!this.goalkeeper) {
-            return { isValid: false, message: 'Please enter a goalkeeper' };
-        }
+            if (!this.goalkeeper?.trim()) {
+                return { isValid: false, message: 'Please enter a goalkeeper' };
+            }
 
-        if (!this.defenders || this.defenders.length < 4) {
-            return { isValid: false, message: 'Please enter at least 4 defenders' };
-        }
+            if (!Array.isArray(this.defenders) || this.defenders.length < 3 || this.defenders.length > 5) {
+                return { isValid: false, message: 'Please enter 3-5 defenders' };
+            }
 
-        if (!this.midfielders || this.midfielders.length < 4) {
-            return { isValid: false, message: 'Please enter at least 4 midfielders' };
-        }
+            if (!Array.isArray(this.midfielders) || this.midfielders.length < 3 || this.midfielders.length > 5) {
+                return { isValid: false, message: 'Please enter 3-5 midfielders' };
+            }
 
-        if (!this.forwards || this.forwards.length < 2) {
-            return { isValid: false, message: 'Please enter at least 2 forwards' };
-        }
+            if (!Array.isArray(this.forwards) || this.forwards.length < 1 || this.forwards.length > 3) {
+                return { isValid: false, message: 'Please enter 1-3 forwards' };
+            }
 
-        return { isValid: true, message: 'Team is valid' };
+            this.log('Team validation successful');
+            return { isValid: true, message: 'Team is valid' };
+        } catch (error) {
+            this.handleError(error, 'Team validation');
+            return { isValid: false, message: 'An error occurred during validation' };
+        }
     }
 
     /**
@@ -61,5 +73,29 @@ export class Team {
             forwards: this.forwards,
             createdAt: this.createdAt
         };
+    }
+
+    /**
+     * Gets the total number of players in the team
+     * @returns {number} Total number of players
+     */
+    getTotalPlayers() {
+        return 1 + // goalkeeper
+               this.defenders.length +
+               this.midfielders.length +
+               this.forwards.length;
+    }
+
+    /**
+     * Gets a formatted string of all players
+     * @returns {string} Formatted list of players
+     */
+    getFormattedPlayers() {
+        return `
+            Goalkeeper: ${this.goalkeeper}
+            Defenders: ${this.defenders.join(', ')}
+            Midfielders: ${this.midfielders.join(', ')}
+            Forwards: ${this.forwards.join(', ')}
+        `.trim();
     }
 } 

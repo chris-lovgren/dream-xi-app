@@ -1,128 +1,121 @@
+import { BaseComponent } from './BaseComponent.js';
+import { Team } from './Team.js';
+
 /**
- * FormManager - Handles form submission and validation
- * This class manages:
- * 1. Form data collection
- * 2. Input validation
- * 3. Form submission
- * 4. Error handling
+ * FormManager - Handles form interactions and validation
+ * Extends BaseComponent to get common functionality
  */
-export class FormManager {
+export class FormManager extends BaseComponent {
     /**
      * Creates a new FormManager instance
-     * @param {HTMLFormElement} form - The form element to manage
-     * @param {TeamService} teamService - The service for team operations
-     * @param {TeamDisplay} teamDisplay - The display manager for teams
+     * @param {HTMLElement} form - The form element
+     * @param {TeamService} teamService - The team service instance
+     * @param {TeamDisplay} teamDisplay - The team display instance
      */
     constructor(form, teamService, teamDisplay) {
+        super();
         this.form = form;
         this.teamService = teamService;
         this.teamDisplay = teamDisplay;
-        this.submitButton = form.querySelector('button[type="submit"]');
+        this.submitButton = this.form.querySelector('button[type="submit"]');
         
-        // Bind event handlers
-        this.form.addEventListener('submit', this.handleSubmit.bind(this));
+        this.initialize();
+        this.log('FormManager initialized');
     }
 
     /**
-     * Collects form data and returns it as an object
-     * @returns {Object} The collected form data
+     * Initializes the form manager
      */
-    collectFormData() {
-        return {
-            submitterName: this.form.querySelector('#submitterName').value,
-            goalkeeper: this.form.querySelector('#goalkeeper').value,
-            defenders: Array.from(this.form.querySelectorAll('.defender'))
-                .map(input => input.value)
-                .filter(value => value.trim() !== ''),
-            midfielders: Array.from(this.form.querySelectorAll('.midfielder'))
-                .map(input => input.value)
-                .filter(value => value.trim() !== ''),
-            forwards: Array.from(this.form.querySelectorAll('.forward'))
-                .map(input => input.value)
-                .filter(value => value.trim() !== '')
-        };
-    }
-
-    /**
-     * Validates the form data
-     * @param {Object} data - The form data to validate
-     * @returns {Array} Array of error messages, empty if valid
-     */
-    validateFormData(data) {
-        const errors = [];
-
-        // Validate submitter name
-        if (!data.submitterName.trim()) {
-            errors.push('Please enter your name');
+    initialize() {
+        try {
+            this.form.addEventListener('submit', this.handleSubmit.bind(this));
+            this.log('Form event listeners initialized');
+        } catch (error) {
+            this.handleError(error, 'Initializing form manager');
         }
-
-        // Validate goalkeeper
-        if (!data.goalkeeper.trim()) {
-            errors.push('Please select a goalkeeper');
-        }
-
-        // Validate defenders (3-5 required)
-        if (data.defenders.length < 3) {
-            errors.push('Please select at least 3 defenders');
-        } else if (data.defenders.length > 5) {
-            errors.push('Maximum 5 defenders allowed');
-        }
-
-        // Validate midfielders (3-5 required)
-        if (data.midfielders.length < 3) {
-            errors.push('Please select at least 3 midfielders');
-        } else if (data.midfielders.length > 5) {
-            errors.push('Maximum 5 midfielders allowed');
-        }
-
-        // Validate forwards (1-3 required)
-        if (data.forwards.length < 1) {
-            errors.push('Please select at least 1 forward');
-        } else if (data.forwards.length > 3) {
-            errors.push('Maximum 3 forwards allowed');
-        }
-
-        return errors;
     }
 
     /**
      * Handles form submission
-     * @param {Event} event - The form submission event
+     * @param {Event} event - The submit event
      */
     async handleSubmit(event) {
         event.preventDefault();
-
-        // Show loading state
-        this.teamDisplay.setLoading(this.submitButton, true);
-
+        
         try {
-            // Collect and validate form data
-            const formData = this.collectFormData();
-            const errors = this.validateFormData(formData);
+            this.log('Form submission started');
+            this.teamDisplay.setLoading(this.submitButton, true);
 
-            if (errors.length > 0) {
-                this.teamDisplay.showMessage(errors.join('\n'), 'error');
+            // Collect form data
+            const formData = this.collectFormData();
+            
+            // Create and validate team
+            const team = new Team(formData);
+            const validation = team.validate();
+            
+            if (!validation.isValid) {
+                this.teamDisplay.showMessage(validation.message, 'error');
                 return;
             }
 
-            // Save the team
-            await this.teamService.saveTeam(formData);
-            
-            // Show success message
-            this.teamDisplay.showMessage('Team saved successfully!', 'success');
-            
-            // Reset form
-            this.form.reset();
+            // Save team
+            await this.teamService.saveTeam(team.toJSON());
             
             // Refresh teams display
             const teams = await this.teamService.getAllTeams();
             this.teamDisplay.displayTeams(teams);
-
+            
+            // Show success message and reset form
+            this.teamDisplay.showMessage('Team saved successfully!', 'success');
+            this.form.reset();
+            
+            this.log('Form submission completed successfully');
         } catch (error) {
-            this.teamDisplay.showMessage('Error saving team: ' + error.message, 'error');
+            this.handleError(error, 'Submitting form');
+            this.teamDisplay.showMessage('Failed to save team. Please try again.', 'error');
         } finally {
-            // Hide loading state
             this.teamDisplay.setLoading(this.submitButton, false);
+        }
+    }
+
+    /**
+     * Collects data from the form
+     * @returns {Object} The collected form data
+     */
+    collectFormData() {
+        try {
+            const data = {
+                submitterName: this.form.querySelector('#submitterName').value.trim(),
+                goalkeeper: this.form.querySelector('#goalkeeper').value.trim(),
+                defenders: Array.from(this.form.querySelectorAll('.defender'))
+                    .map(input => input.value.trim())
+                    .filter(name => name),
+                midfielders: Array.from(this.form.querySelectorAll('.midfielder'))
+                    .map(input => input.value.trim())
+                    .filter(name => name),
+                forwards: Array.from(this.form.querySelectorAll('.forward'))
+                    .map(input => input.value.trim())
+                    .filter(name => name)
+            };
+            
+            this.log('Form data collected');
+            return data;
+        } catch (error) {
+            this.handleError(error, 'Collecting form data');
+            throw error;
+        }
+    }
+
+    /**
+     * Cleans up resources when form manager is destroyed
+     */
+    destroy() {
+        try {
+            this.form.removeEventListener('submit', this.handleSubmit);
+            super.destroy();
+            this.log('FormManager destroyed');
+        } catch (error) {
+            this.handleError(error, 'Destroying form manager');
         }
     }
 } 
