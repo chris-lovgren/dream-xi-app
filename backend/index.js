@@ -18,7 +18,7 @@ const app = express();
 
 // Define where we'll store our team data
 // We use join() to create a path that works on any operating system
-const TEAM_FILE = join(__dirname, '..', 'team.json');
+const TEAM_FILE = join(__dirname, 'team.json');
 
 // Middleware to parse JSON data from requests
 // This lets us read JSON data sent in requests
@@ -117,14 +117,17 @@ app.get('/ping', (req, res) => {
 // GET /teams route - Returns all saved teams
 app.get('/teams', async (req, res, next) => {
     try {
+        console.log('Reading teams from:', TEAM_FILE);
         // Read the team data file
         const data = await readFile(TEAM_FILE, 'utf8');
         
         // Parse the JSON data, default to empty array if file is empty
         const teams = JSON.parse(data || '[]');
+        console.log(`Found ${teams.length} teams`);
         
         // Ensure we always return an array
         if (!Array.isArray(teams)) {
+            console.warn('Teams data is not an array, returning empty array');
             res.json([]);
             return;
         }
@@ -134,9 +137,11 @@ app.get('/teams', async (req, res, next) => {
     } catch (error) {
         // If file doesn't exist yet, return empty array
         if (error.code === 'ENOENT') {
+            console.log('Team file does not exist yet, returning empty array');
             res.json([]);
         } else {
             // For other errors, pass to error handler
+            console.error('Error reading teams:', error);
             next(error);
         }
     }
@@ -145,10 +150,12 @@ app.get('/teams', async (req, res, next) => {
 // POST /team route - Saves a new team
 app.post('/team', validateTeam, async (req, res, next) => {
     try {
+        console.log('Saving new team from:', req.body.submitterName);
         // Read existing teams from file
         let teams = [];
         try {
             const data = await readFile(TEAM_FILE, 'utf8');
+            console.log('Existing teams data:', data);
             
             // Handle empty file
             if (!data.trim()) {
@@ -175,13 +182,16 @@ app.post('/team', validateTeam, async (req, res, next) => {
 
         // Add the new team to our array
         teams.push(req.body);
+        console.log(`Total teams after adding: ${teams.length}`);
         
         // Save the updated teams back to the file
         await writeFile(TEAM_FILE, JSON.stringify(teams, null, 2));
+        console.log('Team saved successfully');
         
         // Send success response
         res.status(201).json({ message: 'Team saved successfully' });
     } catch (error) {
+        console.error('Error saving team:', error);
         // Pass any errors to the error handler
         next(error);
     }
