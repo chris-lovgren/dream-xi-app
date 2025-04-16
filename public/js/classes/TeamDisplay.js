@@ -1,139 +1,96 @@
 import { BaseComponent } from './BaseComponent.js';
+import { Renderable } from './interfaces.js';
 
 /**
  * TeamDisplay class handles rendering teams in the UI
- * Extends BaseComponent to get common functionality
+ * Extends BaseComponent and implements Renderable interface
  */
 export class TeamDisplay extends BaseComponent {
     /**
      * Creates a new TeamDisplay instance
-     * @param {HTMLElement} container - The container element to render teams in
+     * @param {HTMLElement} container - Container element for displaying teams
      */
     constructor(container) {
         super();
         if (!container) {
             throw new Error('Container element is required');
         }
-
         this.setState({
             container,
             teams: [],
             isLoading: false,
             error: null
         });
-
-        this.log('TeamDisplay initialized');
+        this.log('TeamDisplay instance created');
     }
 
     /**
-     * Displays a list of teams in the container
-     * @param {Array} teams - Array of Team instances to display
+     * Renders the teams in the UI
+     * @param {Array<Object>} teams - Array of team objects to display
      */
-    displayTeams(teams) {
+    render(teams) {
         try {
             this.setState({ teams, isLoading: false, error: null });
-            this.log(`Displaying ${teams.length} teams`);
-
-            const container = this.getState().container;
-            container.innerHTML = '';
-
-            if (teams.length === 0) {
-                container.innerHTML = '<p class="no-teams">No teams saved yet</p>';
+            const { container } = this.getState();
+            
+            if (!teams || teams.length === 0) {
+                container.innerHTML = '<p class="no-teams">No teams available</p>';
                 return;
             }
 
-            teams.forEach(team => {
-                const teamCard = this.createTeamCard(team);
-                container.appendChild(teamCard);
-            });
-
-            this.trigger('teamsDisplayed', teams);
+            container.innerHTML = teams.map(team => this.createTeamCard(team)).join('');
+            this.trigger('rendered', { teams });
         } catch (error) {
-            this.setState({ error: error.message });
-            this.handleError(error, 'Displaying teams');
+            this.handleError(error, 'Rendering teams');
         }
     }
 
     /**
-     * Creates a team card element
-     * @param {Team} team - Team instance to create card for
-     * @returns {HTMLElement} Team card element
+     * Creates HTML for a team card
+     * @param {Object} team - Team data
+     * @returns {string} HTML string for team card
      */
     createTeamCard(team) {
-        const card = document.createElement('div');
-        card.className = 'team-card';
-        card.innerHTML = `
-            <h3>${team.getState().submitterName}'s Team</h3>
-            <div class="team-details">
-                <div class="position">
-                    <strong>Goalkeeper:</strong>
-                    <span>${team.getState().goalkeeper}</span>
-                </div>
-                <div class="position">
-                    <strong>Defenders:</strong>
-                    <ul>
-                        ${team.getState().defenders.map(defender => `<li>${defender}</li>`).join('')}
-                    </ul>
-                </div>
-                <div class="position">
-                    <strong>Midfielders:</strong>
-                    <ul>
-                        ${team.getState().midfielders.map(midfielder => `<li>${midfielder}</li>`).join('')}
-                    </ul>
-                </div>
-                <div class="position">
-                    <strong>Forwards:</strong>
-                    <ul>
-                        ${team.getState().forwards.map(forward => `<li>${forward}</li>`).join('')}
-                    </ul>
+        return `
+            <div class="team-card">
+                <h3>${team.submitterName}'s Team</h3>
+                <div class="team-details">
+                    <p><strong>Goalkeeper:</strong> ${team.goalkeeper}</p>
+                    <p><strong>Defenders:</strong> ${team.defenders.join(', ')}</p>
+                    <p><strong>Midfielders:</strong> ${team.midfielders.join(', ')}</p>
+                    <p><strong>Forwards:</strong> ${team.forwards.join(', ')}</p>
+                    <p class="timestamp">Created: ${new Date(team.createdAt).toLocaleString()}</p>
                 </div>
             </div>
         `;
-        return card;
     }
 
     /**
-     * Shows a loading state in the container
+     * Shows loading state in the UI
      */
     showLoading() {
+        const { container } = this.getState();
         this.setState({ isLoading: true });
-        const container = this.getState().container;
         container.innerHTML = '<div class="loading">Loading teams...</div>';
     }
 
     /**
-     * Shows an error message in the container
+     * Shows error message in the UI
      * @param {string} message - Error message to display
      */
     showError(message) {
+        const { container } = this.getState();
         this.setState({ error: message, isLoading: false });
-        const container = this.getState().container;
         container.innerHTML = `<div class="error">${message}</div>`;
     }
 
     /**
-     * Shows a success message in the container
-     * @param {string} message - Success message to display
-     */
-    showSuccess(message) {
-        const container = this.getState().container;
-        const messageElement = document.createElement('div');
-        messageElement.className = 'success';
-        messageElement.textContent = message;
-        container.insertBefore(messageElement, container.firstChild);
-        
-        // Remove the message after 3 seconds
-        setTimeout(() => {
-            messageElement.remove();
-        }, 3000);
-    }
-
-    /**
-     * Clears the container
+     * Clears the display
      */
     clear() {
+        const { container } = this.getState();
         this.setState({ teams: [], error: null });
-        this.getState().container.innerHTML = '';
+        container.innerHTML = '';
     }
 
     /**

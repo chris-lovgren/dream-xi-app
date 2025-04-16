@@ -1,8 +1,9 @@
 import { BaseComponent } from './BaseComponent.js';
+import { Validatable, Updatable } from './interfaces.js';
 
 /**
  * Team class handles team data and validation
- * Extends BaseComponent to get common functionality
+ * Extends BaseComponent and implements Validatable and Updatable interfaces
  */
 export class Team extends BaseComponent {
     /**
@@ -32,54 +33,52 @@ export class Team extends BaseComponent {
 
     /**
      * Validates the team data
-     * @returns {Object} Validation result with isValid and message
+     * @returns {{isValid: boolean, errors: Array<string>}} Validation result
      */
     validate() {
-        try {
-            const errors = [];
-            const state = this.getState();
+        const errors = [];
+        const state = this.getState();
 
-            if (!state.submitterName?.trim()) {
-                errors.push('Please enter your name');
-            }
-
-            if (!state.goalkeeper?.trim()) {
-                errors.push('Please enter a goalkeeper');
-            }
-
-            if (!Array.isArray(state.defenders) || state.defenders.length < 3 || state.defenders.length > 5) {
-                errors.push('Please enter 3-5 defenders');
-            }
-
-            if (!Array.isArray(state.midfielders) || state.midfielders.length < 3 || state.midfielders.length > 5) {
-                errors.push('Please enter 3-5 midfielders');
-            }
-
-            if (!Array.isArray(state.forwards) || state.forwards.length < 1 || state.forwards.length > 3) {
-                errors.push('Please enter 1-3 forwards');
-            }
-
-            const isValid = errors.length === 0;
-            this.setState({ isValid, validationErrors: errors });
-
-            if (isValid) {
-                this.log('Team validation successful');
-                this.trigger('validated', { isValid, errors: [] });
-            } else {
-                this.log('Team validation failed', 'warn');
-                this.trigger('validationError', { isValid, errors });
-            }
-
-            return { isValid, errors };
-        } catch (error) {
-            this.handleError(error, 'Team validation');
-            return { isValid: false, errors: ['An error occurred during validation'] };
+        // Validate submitter name
+        if (!state.submitterName?.trim()) {
+            errors.push('Submitter name is required');
         }
+
+        // Validate goalkeeper
+        if (!state.goalkeeper?.trim()) {
+            errors.push('Goalkeeper is required');
+        }
+
+        // Validate defenders (3-5)
+        if (!Array.isArray(state.defenders) || state.defenders.length < 3 || state.defenders.length > 5) {
+            errors.push('Must have between 3 and 5 defenders');
+        }
+
+        // Validate midfielders (3-5)
+        if (!Array.isArray(state.midfielders) || state.midfielders.length < 3 || state.midfielders.length > 5) {
+            errors.push('Must have between 3 and 5 midfielders');
+        }
+
+        // Validate forwards (1-3)
+        if (!Array.isArray(state.forwards) || state.forwards.length < 1 || state.forwards.length > 3) {
+            errors.push('Must have between 1 and 3 forwards');
+        }
+
+        // Update validation state
+        this.setState({
+            isValid: errors.length === 0,
+            validationErrors: errors
+        });
+
+        return {
+            isValid: errors.length === 0,
+            errors
+        };
     }
 
     /**
-     * Converts the team to a plain object
-     * @returns {Object} Team data as a plain object
+     * Converts team to plain object
+     * @returns {Object} Team data
      */
     toJSON() {
         const state = this.getState();
@@ -94,8 +93,8 @@ export class Team extends BaseComponent {
     }
 
     /**
-     * Gets the total number of players in the team
-     * @returns {number} Total number of players
+     * Gets total number of players
+     * @returns {number} Total players
      */
     getTotalPlayers() {
         const state = this.getState();
@@ -106,17 +105,15 @@ export class Team extends BaseComponent {
     }
 
     /**
-     * Gets a formatted string of all players
-     * @returns {string} Formatted list of players
+     * Gets formatted string of all players
+     * @returns {string} Formatted players string
      */
     getFormattedPlayers() {
         const state = this.getState();
-        return `
-            Goalkeeper: ${state.goalkeeper}
-            Defenders: ${state.defenders.join(', ')}
-            Midfielders: ${state.midfielders.join(', ')}
-            Forwards: ${state.forwards.join(', ')}
-        `.trim();
+        return `Goalkeeper: ${state.goalkeeper}
+Defenders: ${state.defenders.join(', ')}
+Midfielders: ${state.midfielders.join(', ')}
+Forwards: ${state.forwards.join(', ')}`;
     }
 
     /**
