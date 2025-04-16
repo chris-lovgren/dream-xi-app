@@ -1,110 +1,146 @@
 import { BaseComponent } from './BaseComponent.js';
 
 /**
- * TeamDisplay - Handles displaying teams in the UI
+ * TeamDisplay class handles rendering teams in the UI
  * Extends BaseComponent to get common functionality
  */
 export class TeamDisplay extends BaseComponent {
     /**
      * Creates a new TeamDisplay instance
-     * @param {HTMLElement} container - The container element for displaying teams
+     * @param {HTMLElement} container - The container element to render teams in
      */
     constructor(container) {
         super();
-        this.container = container;
+        if (!container) {
+            throw new Error('Container element is required');
+        }
+
+        this.setState({
+            container,
+            teams: [],
+            isLoading: false,
+            error: null
+        });
+
         this.log('TeamDisplay initialized');
     }
 
     /**
-     * Creates a team element for display
-     * @param {Object} team - The team data
-     * @returns {HTMLElement} The created team element
-     */
-    createTeamElement(team) {
-        const teamElement = document.createElement('div');
-        teamElement.className = 'team-card';
-        teamElement.innerHTML = `
-            <h3>${team.submitterName}'s Team</h3>
-            <div class="team-details">
-                <strong>Goalkeeper:</strong> ${team.goalkeeper}
-                <strong>Defenders:</strong> ${team.defenders.join(', ')}
-                <strong>Midfielders:</strong> ${team.midfielders.join(', ')}
-                <strong>Forwards:</strong> ${team.forwards.join(', ')}
-                <small>Created: ${new Date(team.createdAt).toLocaleString()}</small>
-            </div>
-        `;
-        return teamElement;
-    }
-
-    /**
-     * Displays teams in the container
-     * @param {Array} teams - Array of team objects
+     * Displays a list of teams in the container
+     * @param {Array} teams - Array of Team instances to display
      */
     displayTeams(teams) {
         try {
+            this.setState({ teams, isLoading: false, error: null });
             this.log(`Displaying ${teams.length} teams`);
-            this.container.innerHTML = '';
-            
+
+            const container = this.getState().container;
+            container.innerHTML = '';
+
             if (teams.length === 0) {
-                this.showMessage('No teams have been submitted yet.', 'info');
+                container.innerHTML = '<p class="no-teams">No teams saved yet</p>';
                 return;
             }
 
-            // Display teams in reverse chronological order
-            teams.reverse().forEach(team => {
-                const teamElement = this.createTeamElement(team);
-                this.container.appendChild(teamElement);
+            teams.forEach(team => {
+                const teamCard = this.createTeamCard(team);
+                container.appendChild(teamCard);
             });
+
+            this.trigger('teamsDisplayed', teams);
         } catch (error) {
+            this.setState({ error: error.message });
             this.handleError(error, 'Displaying teams');
         }
     }
 
     /**
-     * Shows a message to the user
-     * @param {string} message - The message to display
-     * @param {string} type - The type of message (success, error, info)
+     * Creates a team card element
+     * @param {Team} team - Team instance to create card for
+     * @returns {HTMLElement} Team card element
      */
-    showMessage(message, type = 'info') {
-        try {
-            this.log(`Showing ${type} message: ${message}`);
-            const messageElement = document.createElement('div');
-            messageElement.className = `message ${type}`;
-            messageElement.textContent = message;
-            
-            // Remove any existing messages
-            const existingMessage = this.container.querySelector('.message');
-            if (existingMessage) {
-                existingMessage.remove();
-            }
-            
-            this.container.insertBefore(messageElement, this.container.firstChild);
-            
-            // Auto-remove message after 5 seconds
-            setTimeout(() => {
-                messageElement.remove();
-            }, 5000);
-        } catch (error) {
-            this.handleError(error, 'Showing message');
-        }
+    createTeamCard(team) {
+        const card = document.createElement('div');
+        card.className = 'team-card';
+        card.innerHTML = `
+            <h3>${team.getState().submitterName}'s Team</h3>
+            <div class="team-details">
+                <div class="position">
+                    <strong>Goalkeeper:</strong>
+                    <span>${team.getState().goalkeeper}</span>
+                </div>
+                <div class="position">
+                    <strong>Defenders:</strong>
+                    <ul>
+                        ${team.getState().defenders.map(defender => `<li>${defender}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="position">
+                    <strong>Midfielders:</strong>
+                    <ul>
+                        ${team.getState().midfielders.map(midfielder => `<li>${midfielder}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="position">
+                    <strong>Forwards:</strong>
+                    <ul>
+                        ${team.getState().forwards.map(forward => `<li>${forward}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        return card;
     }
 
     /**
-     * Sets the loading state of a submit button
-     * @param {HTMLElement} button - The submit button
-     * @param {boolean} isLoading - Whether the button should be in loading state
+     * Shows a loading state in the container
      */
-    setLoading(button, isLoading) {
-        try {
-            if (isLoading) {
-                button.classList.add('loading');
-                button.disabled = true;
-            } else {
-                button.classList.remove('loading');
-                button.disabled = false;
-            }
-        } catch (error) {
-            this.handleError(error, 'Setting loading state');
-        }
+    showLoading() {
+        this.setState({ isLoading: true });
+        const container = this.getState().container;
+        container.innerHTML = '<div class="loading">Loading teams...</div>';
+    }
+
+    /**
+     * Shows an error message in the container
+     * @param {string} message - Error message to display
+     */
+    showError(message) {
+        this.setState({ error: message, isLoading: false });
+        const container = this.getState().container;
+        container.innerHTML = `<div class="error">${message}</div>`;
+    }
+
+    /**
+     * Shows a success message in the container
+     * @param {string} message - Success message to display
+     */
+    showSuccess(message) {
+        const container = this.getState().container;
+        const messageElement = document.createElement('div');
+        messageElement.className = 'success';
+        messageElement.textContent = message;
+        container.insertBefore(messageElement, container.firstChild);
+        
+        // Remove the message after 3 seconds
+        setTimeout(() => {
+            messageElement.remove();
+        }, 3000);
+    }
+
+    /**
+     * Clears the container
+     */
+    clear() {
+        this.setState({ teams: [], error: null });
+        this.getState().container.innerHTML = '';
+    }
+
+    /**
+     * Lifecycle method called before component is destroyed
+     */
+    beforeDestroy() {
+        this.clear();
+        this.trigger('beforeDestroy');
     }
 } 

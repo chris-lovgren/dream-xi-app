@@ -16,12 +16,16 @@ export class Team extends BaseComponent {
      */
     constructor(data) {
         super();
-        this.submitterName = data.submitterName;
-        this.goalkeeper = data.goalkeeper;
-        this.defenders = data.defenders;
-        this.midfielders = data.midfielders;
-        this.forwards = data.forwards;
-        this.createdAt = new Date().toISOString();
+        this.setState({
+            submitterName: data.submitterName,
+            goalkeeper: data.goalkeeper,
+            defenders: data.defenders,
+            midfielders: data.midfielders,
+            forwards: data.forwards,
+            createdAt: new Date().toISOString(),
+            isValid: false,
+            validationErrors: []
+        });
         
         this.log('Team instance created');
     }
@@ -32,31 +36,44 @@ export class Team extends BaseComponent {
      */
     validate() {
         try {
-            if (!this.submitterName?.trim()) {
-                return { isValid: false, message: 'Please enter your name' };
+            const errors = [];
+            const state = this.getState();
+
+            if (!state.submitterName?.trim()) {
+                errors.push('Please enter your name');
             }
 
-            if (!this.goalkeeper?.trim()) {
-                return { isValid: false, message: 'Please enter a goalkeeper' };
+            if (!state.goalkeeper?.trim()) {
+                errors.push('Please enter a goalkeeper');
             }
 
-            if (!Array.isArray(this.defenders) || this.defenders.length < 3 || this.defenders.length > 5) {
-                return { isValid: false, message: 'Please enter 3-5 defenders' };
+            if (!Array.isArray(state.defenders) || state.defenders.length < 3 || state.defenders.length > 5) {
+                errors.push('Please enter 3-5 defenders');
             }
 
-            if (!Array.isArray(this.midfielders) || this.midfielders.length < 3 || this.midfielders.length > 5) {
-                return { isValid: false, message: 'Please enter 3-5 midfielders' };
+            if (!Array.isArray(state.midfielders) || state.midfielders.length < 3 || state.midfielders.length > 5) {
+                errors.push('Please enter 3-5 midfielders');
             }
 
-            if (!Array.isArray(this.forwards) || this.forwards.length < 1 || this.forwards.length > 3) {
-                return { isValid: false, message: 'Please enter 1-3 forwards' };
+            if (!Array.isArray(state.forwards) || state.forwards.length < 1 || state.forwards.length > 3) {
+                errors.push('Please enter 1-3 forwards');
             }
 
-            this.log('Team validation successful');
-            return { isValid: true, message: 'Team is valid' };
+            const isValid = errors.length === 0;
+            this.setState({ isValid, validationErrors: errors });
+
+            if (isValid) {
+                this.log('Team validation successful');
+                this.trigger('validated', { isValid, errors: [] });
+            } else {
+                this.log('Team validation failed', 'warn');
+                this.trigger('validationError', { isValid, errors });
+            }
+
+            return { isValid, errors };
         } catch (error) {
             this.handleError(error, 'Team validation');
-            return { isValid: false, message: 'An error occurred during validation' };
+            return { isValid: false, errors: ['An error occurred during validation'] };
         }
     }
 
@@ -65,13 +82,14 @@ export class Team extends BaseComponent {
      * @returns {Object} Team data as a plain object
      */
     toJSON() {
+        const state = this.getState();
         return {
-            submitterName: this.submitterName,
-            goalkeeper: this.goalkeeper,
-            defenders: this.defenders,
-            midfielders: this.midfielders,
-            forwards: this.forwards,
-            createdAt: this.createdAt
+            submitterName: state.submitterName,
+            goalkeeper: state.goalkeeper,
+            defenders: state.defenders,
+            midfielders: state.midfielders,
+            forwards: state.forwards,
+            createdAt: state.createdAt
         };
     }
 
@@ -80,10 +98,11 @@ export class Team extends BaseComponent {
      * @returns {number} Total number of players
      */
     getTotalPlayers() {
+        const state = this.getState();
         return 1 + // goalkeeper
-               this.defenders.length +
-               this.midfielders.length +
-               this.forwards.length;
+               state.defenders.length +
+               state.midfielders.length +
+               state.forwards.length;
     }
 
     /**
@@ -91,11 +110,33 @@ export class Team extends BaseComponent {
      * @returns {string} Formatted list of players
      */
     getFormattedPlayers() {
+        const state = this.getState();
         return `
-            Goalkeeper: ${this.goalkeeper}
-            Defenders: ${this.defenders.join(', ')}
-            Midfielders: ${this.midfielders.join(', ')}
-            Forwards: ${this.forwards.join(', ')}
+            Goalkeeper: ${state.goalkeeper}
+            Defenders: ${state.defenders.join(', ')}
+            Midfielders: ${state.midfielders.join(', ')}
+            Forwards: ${state.forwards.join(', ')}
         `.trim();
+    }
+
+    /**
+     * Updates team data
+     * @param {Object} updates - Partial team data to update
+     */
+    update(updates) {
+        try {
+            this.setState(updates);
+            this.validate();
+            this.trigger('updated', this.toJSON());
+        } catch (error) {
+            this.handleError(error, 'Updating team');
+        }
+    }
+
+    /**
+     * Lifecycle method called before component is destroyed
+     */
+    beforeDestroy() {
+        this.trigger('beforeDestroy', this.toJSON());
     }
 } 
