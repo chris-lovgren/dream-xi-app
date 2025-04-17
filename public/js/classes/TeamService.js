@@ -6,10 +6,11 @@ import { Team } from './Team.js';
  * Extends BaseComponent to get common functionality
  */
 export class TeamService extends BaseComponent {
+    #baseUrl = 'https://dream-xi-app.onrender.com';
+    
     constructor() {
         super();
         this.setState({
-            baseUrl: 'https://dream-xi-app.onrender.com',
             teams: [],
             isLoading: false,
             error: null
@@ -27,7 +28,7 @@ export class TeamService extends BaseComponent {
             this.setState({ isLoading: true, error: null });
             this.log('Fetching all teams');
 
-            const response = await fetch(`${this.getState().baseUrl}/api/teams`);
+            const response = await fetch(`${this.#baseUrl}/api/teams`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -57,7 +58,7 @@ export class TeamService extends BaseComponent {
             this.setState({ isLoading: true, error: null });
             this.log(`Fetching teams with formation: ${formation}`);
 
-            const response = await fetch(`${this.getState().baseUrl}/api/teams/formation/${formation}`);
+            const response = await fetch(`${this.#baseUrl}/api/teams/formation/${formation}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -87,7 +88,7 @@ export class TeamService extends BaseComponent {
             this.setState({ isLoading: true, error: null });
             this.log(`Fetching teams with player: ${playerName}`);
 
-            const response = await fetch(`${this.getState().baseUrl}/api/teams/player/${encodeURIComponent(playerName)}`);
+            const response = await fetch(`${this.#baseUrl}/api/teams/player/${encodeURIComponent(playerName)}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -126,7 +127,7 @@ export class TeamService extends BaseComponent {
             this.setState({ isLoading: true, error: null });
             this.log('Saving team');
 
-            const response = await fetch(`${this.getState().baseUrl}/api/teams`, {
+            const response = await fetch(`${this.#baseUrl}/api/teams`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -136,7 +137,7 @@ export class TeamService extends BaseComponent {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                throw new Error(errorData.message ?? `HTTP error! status: ${response.status}`);
             }
 
             const result = await response.json();
@@ -166,7 +167,7 @@ export class TeamService extends BaseComponent {
             this.setState({ isLoading: true, error: null });
             this.log(`Updating team: ${id}`);
 
-            const response = await fetch(`${this.getState().baseUrl}/api/teams/${id}`, {
+            const response = await fetch(`${this.#baseUrl}/api/teams/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json'
@@ -176,7 +177,7 @@ export class TeamService extends BaseComponent {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                throw new Error(errorData.message ?? `HTTP error! status: ${response.status}`);
             }
 
             const result = await response.json();
@@ -201,13 +202,13 @@ export class TeamService extends BaseComponent {
             this.setState({ isLoading: true, error: null });
             this.log(`Deleting team: ${id}`);
 
-            const response = await fetch(`${this.getState().baseUrl}/api/teams/${id}`, {
+            const response = await fetch(`${this.#baseUrl}/api/teams/${id}`, {
                 method: 'DELETE'
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                throw new Error(errorData.message ?? `HTTP error! status: ${response.status}`);
             }
 
             const result = await response.json();
@@ -226,7 +227,7 @@ export class TeamService extends BaseComponent {
      * Gets the current loading state
      * @returns {boolean} True if loading
      */
-    isLoading() {
+    get isLoading() {
         return this.getState().isLoading;
     }
 
@@ -234,7 +235,7 @@ export class TeamService extends BaseComponent {
      * Gets the current error state
      * @returns {string|null} Error message or null
      */
-    getError() {
+    get error() {
         return this.getState().error;
     }
 
@@ -242,7 +243,7 @@ export class TeamService extends BaseComponent {
      * Gets the cached teams
      * @returns {Array} Array of Team instances
      */
-    getCachedTeams() {
+    get cachedTeams() {
         return this.getState().teams;
     }
 

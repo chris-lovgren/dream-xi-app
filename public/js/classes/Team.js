@@ -6,30 +6,21 @@ import { Validatable, Updatable } from './interfaces.js';
  * Extends BaseComponent and implements Validatable and Updatable interfaces
  */
 export class Team extends BaseComponent {
-    /**
-     * Creates a new team instance
-     * @param {Object} data - Team data
-     * @param {string} data.name - Team name
-     * @param {string} data.formation - Team formation
-     * @param {Object} data.players - Team players
-     * @param {string} data.players.goalkeeper - Goalkeeper name
-     * @param {Array} data.players.defenders - Array of defender names
-     * @param {Array} data.players.midfielders - Array of midfielder names
-     * @param {Array} data.players.forwards - Array of forward names
-     */
-    constructor(data) {
+    #validFormations = ['4-4-2', '4-3-3', '3-5-2', '4-2-3-1'];
+    
+    constructor(data = {}) {
         super();
         this.setState({
-            name: data.name,
-            formation: data.formation,
+            name: data.name ?? '',
+            formation: data.formation ?? '',
             players: {
-                goalkeeper: data.players?.goalkeeper || '',
-                defenders: data.players?.defenders || [],
-                midfielders: data.players?.midfielders || [],
-                forwards: data.players?.forwards || []
+                goalkeeper: data.players?.goalkeeper ?? '',
+                defenders: data.players?.defenders ?? [],
+                midfielders: data.players?.midfielders ?? [],
+                forwards: data.players?.forwards ?? []
             },
-            createdAt: data.createdAt || new Date().toISOString(),
-            updatedAt: data.updatedAt || new Date().toISOString(),
+            createdAt: data.createdAt ?? new Date().toISOString(),
+            updatedAt: data.updatedAt ?? new Date().toISOString(),
             isValid: false,
             validationErrors: []
         });
@@ -43,41 +34,40 @@ export class Team extends BaseComponent {
      */
     validate() {
         const errors = [];
-        const state = this.getState();
+        const { name, formation, players } = this.getState();
 
         // Validate team name
-        if (!state.name?.trim()) {
+        if (!name?.trim()) {
             errors.push('Team name is required');
-        } else if (state.name.length > 50) {
+        } else if (name.length > 50) {
             errors.push('Team name cannot exceed 50 characters');
         }
 
         // Validate formation
-        const validFormations = ['4-4-2', '4-3-3', '3-5-2', '4-2-3-1'];
-        if (!validFormations.includes(state.formation)) {
-            errors.push('Invalid formation');
+        if (!this.#validFormations.includes(formation)) {
+            errors.push(`Invalid formation. Must be one of: ${this.#validFormations.join(', ')}`);
         }
 
         // Validate goalkeeper
-        if (!state.players.goalkeeper?.trim()) {
+        if (!players.goalkeeper?.trim()) {
             errors.push('Goalkeeper is required');
         }
 
         // Validate defenders
-        const defenderCount = parseInt(state.formation.split('-')[0]);
-        if (!Array.isArray(state.players.defenders) || state.players.defenders.length !== defenderCount) {
+        const defenderCount = parseInt(formation.split('-')[0]);
+        if (!Array.isArray(players.defenders) || players.defenders.length !== defenderCount) {
             errors.push(`Must have exactly ${defenderCount} defenders`);
         }
 
         // Validate midfielders
-        const midfielderCount = parseInt(state.formation.split('-')[1]);
-        if (!Array.isArray(state.players.midfielders) || state.players.midfielders.length !== midfielderCount) {
+        const midfielderCount = parseInt(formation.split('-')[1]);
+        if (!Array.isArray(players.midfielders) || players.midfielders.length !== midfielderCount) {
             errors.push(`Must have exactly ${midfielderCount} midfielders`);
         }
 
         // Validate forwards
-        const forwardCount = parseInt(state.formation.split('-')[2]);
-        if (!Array.isArray(state.players.forwards) || state.players.forwards.length !== forwardCount) {
+        const forwardCount = parseInt(formation.split('-')[2]);
+        if (!Array.isArray(players.forwards) || players.forwards.length !== forwardCount) {
             errors.push(`Must have exactly ${forwardCount} forwards`);
         }
 
@@ -98,43 +88,32 @@ export class Team extends BaseComponent {
      * @returns {Object} Team data
      */
     toJSON() {
-        const state = this.getState();
-        return {
-            name: state.name,
-            formation: state.formation,
-            players: {
-                goalkeeper: state.players.goalkeeper,
-                defenders: state.players.defenders,
-                midfielders: state.players.midfielders,
-                forwards: state.players.forwards
-            },
-            createdAt: state.createdAt,
-            updatedAt: state.updatedAt
-        };
+        const { name, formation, players, createdAt, updatedAt } = this.getState();
+        return { name, formation, players, createdAt, updatedAt };
     }
 
     /**
      * Gets total number of players
      * @returns {number} Total players
      */
-    getTotalPlayers() {
-        const state = this.getState();
+    get totalPlayers() {
+        const { players } = this.getState();
         return 1 + // goalkeeper
-               state.players.defenders.length +
-               state.players.midfielders.length +
-               state.players.forwards.length;
+               players.defenders.length +
+               players.midfielders.length +
+               players.forwards.length;
     }
 
     /**
      * Gets formatted string of all players
      * @returns {string} Formatted player list
      */
-    getFormattedPlayers() {
-        const state = this.getState();
-        return `GK: ${state.players.goalkeeper}\n` +
-               `DEF: ${state.players.defenders.join(', ')}\n` +
-               `MID: ${state.players.midfielders.join(', ')}\n` +
-               `FWD: ${state.players.forwards.join(', ')}`;
+    get formattedPlayers() {
+        const { players } = this.getState();
+        return `GK: ${players.goalkeeper}\n` +
+               `DEF: ${players.defenders.join(', ')}\n` +
+               `MID: ${players.midfielders.join(', ')}\n` +
+               `FWD: ${players.forwards.join(', ')}`;
     }
 
     /**
@@ -157,19 +136,67 @@ export class Team extends BaseComponent {
      * @returns {boolean} True if player exists
      */
     hasPlayer(playerName) {
-        const state = this.getState();
-        return state.players.goalkeeper === playerName ||
-               state.players.defenders.includes(playerName) ||
-               state.players.midfielders.includes(playerName) ||
-               state.players.forwards.includes(playerName);
+        const { players } = this.getState();
+        return players.goalkeeper === playerName ||
+               players.defenders.includes(playerName) ||
+               players.midfielders.includes(playerName) ||
+               players.forwards.includes(playerName);
     }
 
     /**
      * Gets all players in the team
      * @returns {Object} All players by position
      */
-    getAllPlayers() {
+    get allPlayers() {
         return this.getState().players;
+    }
+
+    /**
+     * Gets the team's formation
+     * @returns {string} Team formation
+     */
+    get formation() {
+        return this.getState().formation;
+    }
+
+    /**
+     * Gets the team's name
+     * @returns {string} Team name
+     */
+    get name() {
+        return this.getState().name;
+    }
+
+    /**
+     * Gets the team's creation date
+     * @returns {string} Creation date
+     */
+    get createdAt() {
+        return this.getState().createdAt;
+    }
+
+    /**
+     * Gets the team's last update date
+     * @returns {string} Last update date
+     */
+    get updatedAt() {
+        return this.getState().updatedAt;
+    }
+
+    /**
+     * Gets the team's validation status
+     * @returns {boolean} True if team is valid
+     */
+    get isValid() {
+        return this.getState().isValid;
+    }
+
+    /**
+     * Gets the team's validation errors
+     * @returns {Array<string>} Validation errors
+     */
+    get validationErrors() {
+        return this.getState().validationErrors;
     }
 
     /**
